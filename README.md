@@ -1,1 +1,1 @@
-Projeto de desenvolvimento para gerenciamento de manuais elétrico.
+Projeto em desenvolvimento para gerenciamento de manuais elétrico.
