@@ -1,0 +1,805 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Sistema de Gerenciamento de Manuais",
+    "description": "API para gerenciamento e consulta de manuais em PDF",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5001/"
+    }
+  ],
+  "paths": {
+    "/usuario/": {
+      "get": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Retorna uma lista de todos os usuarios cadastrados",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Cadastra um determinado usuario",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "usuarioNome": {
+                    "example": "any"
+                  },
+                  "usuarioEmail": {
+                    "example": "any"
+                  },
+                  "usuarioSenha": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/usuario/logado": {
+      "get": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Retorna uma lista de todos os usuarios logados",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/usuario/{id}/inativar": {
+      "patch": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Inativa um usuario atraves do seu ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/usuario/login": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Realiza login do usuario",
+        "description": "Autentica o usuário e retorna um token JWT",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "usuarioEmail": {
+                    "example": "any"
+                  },
+                  "usuarioSenha": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/usuario/logout": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Realiza logout do usuario",
+        "description": "Remove o cookie de autenticação do usuário",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/usuario/{id}": {
+      "put": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Realiza a alteração de um usuario",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "usuarioNome": {
+                    "example": "any"
+                  },
+                  "usuarioEmail": {
+                    "example": "any"
+                  },
+                  "usuarioSenha": {
+                    "example": "any"
+                  },
+                  "perID": {
+                    "example": "any"
+                  },
+                  "usuarioAtivo": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Busca um usuario especifico pelo seu ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "['Deletar um usuario identificado pelo ID']",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/categoria/cadastrar": {
+      "post": {
+        "tags": [
+          "Categoria"
+        ],
+        "summary": "Cadastrar",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "catNome": {
+                    "example": "any"
+                  },
+                  "catDescricao": {
+                    "example": "any"
+                  },
+                  "catAtivo": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categoria/listar": {
+      "get": {
+        "tags": [
+          "Categoria"
+        ],
+        "summary": "Listar",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/categoria/excluir/{id}": {
+      "delete": {
+        "tags": [
+          "Categoria"
+        ],
+        "summary": "Excluir",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/categoria/modificar/{id}": {
+      "put": {
+        "tags": [
+          "Categoria"
+        ],
+        "summary": "Modificar",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "catNome": {
+                    "example": "any"
+                  },
+                  "catDescricao": {
+                    "example": "any"
+                  },
+                  "catAtivo": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categoria/buscar": {
+      "get": {
+        "tags": [
+          "Categoria"
+        ],
+        "summary": "Buscar",
+        "description": "",
+        "parameters": [
+          {
+            "name": "nome",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/manual/cadastrar": {
+      "post": {
+        "tags": [
+          "Manual"
+        ],
+        "summary": "Cadastrar",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "manNome": {
+                    "example": "any"
+                  },
+                  "manVoltagem": {
+                    "example": "any"
+                  },
+                  "catID": {
+                    "example": "any"
+                  },
+                  "manChaveR2": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/manual/listar": {
+      "get": {
+        "tags": [
+          "Manual"
+        ],
+        "summary": "Listar",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/manual/excluir/{id}": {
+      "delete": {
+        "tags": [
+          "Manual"
+        ],
+        "summary": "Excluir",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/manual/modificar/{id}": {
+      "put": {
+        "tags": [
+          "Manual"
+        ],
+        "summary": "Modificar",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "manNome": {
+                    "example": "any"
+                  },
+                  "manVoltagem": {
+                    "example": "any"
+                  },
+                  "catID": {
+                    "example": "any"
+                  },
+                  "manChaveR2": {
+                    "example": "any"
+                  },
+                  "manAtivo": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/manual/buscar": {
+      "get": {
+        "tags": [
+          "Manual"
+        ],
+        "summary": "Buscar",
+        "description": "",
+        "parameters": [
+          {
+            "name": "nome",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "jwt": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "token",
+        "description": "JWT armazenado em cookie"
+      }
+    },
+    "schemas": {
+      "usuario": {
+        "type": "object",
+        "properties": {
+          "usuarioNome": {
+            "type": "string",
+            "example": "João da Silva"
+          },
+          "usuarioEmail": {
+            "type": "string",
+            "example": "joao@gmail.com"
+          },
+          "usuarioSenha": {
+            "type": "string",
+            "example": "123456"
+          },
+          "perID": {
+            "type": "number",
+            "example": 1
+          }
+        }
+      },
+      "login": {
+        "type": "object",
+        "properties": {
+          "usuarioEmail": {
+            "type": "string",
+            "example": "joao@gmail.com"
+          },
+          "usuarioSenha": {
+            "type": "string",
+            "example": "123456"
+          }
+        }
+      },
+      "categoria": {
+        "type": "object",
+        "properties": {
+          "catNome": {
+            "type": "string",
+            "example": "Painéis Elétricos"
+          },
+          "catDescricao": {
+            "type": "string",
+            "example": "Manuais relacionados aos painéis elétricos"
+          }
+        }
+      },
+      "manual": {
+        "type": "object",
+        "properties": {
+          "manNome": {
+            "type": "string",
+            "example": "Manual Painel Elétrico Modelo X"
+          },
+          "manVoltagem": {
+            "type": "string",
+            "example": "220V"
+          },
+          "catID": {
+            "type": "number",
+            "example": 1
+          },
+          "manChaveR2": {
+            "type": "string",
+            "example": "manuais/painel-modelo-x.pdf"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "jwt": []
+    }
+  ]
+}
