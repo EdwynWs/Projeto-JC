@@ -29,7 +29,8 @@ export default async function autenticar(req, res, next) {
             });
         }
 
-        if (usuario.usu_ativo !== 1) {
+        // Verifica se o usuário continua ativo
+        if (Number(usuario.usu_ativo) !== 1) {
             return res.status(403).json({
                 msg: "Usuário inativo"
             });
@@ -46,5 +47,7 @@ export default async function autenticar(req, res, next) {
         return res.status(401).json({
             msg: "Token inválido"
         });
+
     }
+
 }
