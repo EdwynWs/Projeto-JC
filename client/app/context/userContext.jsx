@@ -1,9 +1,18 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useState
+} from "react";
+
 import { useRouter } from "next/navigation";
 
 const UserContext = createContext(null);
+
+const API_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 
 export function UserProvider({ children }) {
 
@@ -12,57 +21,61 @@ export function UserProvider({ children }) {
     const [usuario, setUsuario] = useState(null);
     const [carregando, setCarregando] = useState(true);
 
-    useEffect(() => {
+    async function carregarUsuario() {
 
-        async function carregarUsuario() {
+        try {
 
-            try {
+            setCarregando(true);
 
-                const response = await fetch(
-                    "http://localhost:5001/usuario/logado",
-                    {
-                        method: "GET",
-                        credentials: "include",
-                    }
-                );
-
-                if (!response.ok) {
-
-                    setUsuario(null);
-
-                    if (
-                        response.status === 401 ||
-                        response.status === 403
-                    ) {
-                        router.replace("/login");
-                    }
-
-                    return;
+            const response = await fetch(
+                `${API_URL}/usuario/logado`,
+                {
+                    method: "GET",
+                    credentials: "include",
                 }
+            );
 
-                const dados = await response.json();
-
-                setUsuario(dados);
-
-            } catch (error) {
-
-                console.error("Erro ao carregar usuário:", error);
+            if (!response.ok) {
 
                 setUsuario(null);
 
-                router.replace("/login");
+                if (
+                    response.status === 401 ||
+                    response.status === 403
+                ) {
+                    router.replace("/login");
+                }
 
-            } finally {
-
-                setCarregando(false);
-
+                return;
             }
+
+            const dados = await response.json();
+
+            setUsuario(dados);
+
+        } catch (error) {
+
+            console.error(
+                "Erro ao carregar usuário:",
+                error
+            );
+
+            setUsuario(null);
+
+            router.replace("/login");
+
+        } finally {
+
+            setCarregando(false);
+
         }
+    }
+
+    useEffect(() => {
 
         carregarUsuario();
 
-    }, [router]);
-
+    }, []);
 
     function ehAdmin() {
 
@@ -73,7 +86,6 @@ export function UserProvider({ children }) {
         return Number(usuario.per_id) === 2;
     }
 
-
     function ehCliente() {
 
         if (!usuario) {
@@ -83,13 +95,12 @@ export function UserProvider({ children }) {
         return Number(usuario.per_id) === 1;
     }
 
-
     async function logout() {
 
         try {
 
             await fetch(
-                "http://localhost:5001/usuario/logout",
+                `${API_URL}/usuario/logout`,
                 {
                     method: "POST",
                     credentials: "include",
@@ -98,7 +109,10 @@ export function UserProvider({ children }) {
 
         } catch (error) {
 
-            console.error("Erro ao fazer logout:", error);
+            console.error(
+                "Erro ao fazer logout:",
+                error
+            );
 
         } finally {
 
@@ -109,7 +123,6 @@ export function UserProvider({ children }) {
         }
     }
 
-
     return (
         <UserContext.Provider
             value={{
@@ -118,6 +131,7 @@ export function UserProvider({ children }) {
                 ehAdmin,
                 ehCliente,
                 logout,
+                recarregarUsuario: carregarUsuario
             }}
         >
             {children}
@@ -125,15 +139,16 @@ export function UserProvider({ children }) {
     );
 }
 
-
 export function useUsuario() {
 
     const contexto = useContext(UserContext);
 
     if (!contexto) {
+
         throw new Error(
             "useUsuario deve ser utilizado dentro de UserProvider"
         );
+
     }
 
     return contexto;

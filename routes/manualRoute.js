@@ -51,4 +51,13 @@ router.get("/buscar", auth, (req, res) => {
     controller.buscarPorNome(req, res);
 });
 
+router.get("/:id/arquivo", auth, (req, res) => {
+    /* #swagger.security = [{
+    "jwt": []
+    }] */
+    //#swagger.tags = ['Manual']
+    //#swagger.summary = 'Abrir PDF'
+    controller.abrirArquivo(req, res)
+});
+
 export default router;

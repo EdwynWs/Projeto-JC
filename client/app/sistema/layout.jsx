@@ -1,60 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { UserProvider, useUsuario } from "../context/userContext";
 
 import Sidebar from "../components/sidebar";
 import Header from "../components/header";
 
-const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
-
 export default function SistemaLayout({ children }) {
 
-    const router = useRouter();
+    return (
+        <UserProvider>
+            <SistemaConteudo>
+                {children}
+            </SistemaConteudo>
+        </UserProvider>
+    );
+}
 
-    const [usuario, setUsuario] = useState(null);
-    const [carregando, setCarregando] = useState(true);
+function SistemaConteudo({ children }) {
 
-    useEffect(() => {
-
-        async function carregarUsuario() {
-
-            try {
-
-                const response = await fetch(
-                    `${API_URL}/usuario/logado`,
-                    {
-                        method: "GET",
-                        credentials: "include",
-                    }
-                );
-
-                if (!response.ok) {
-                    router.replace("/login");
-                    return;
-                }
-
-                const dados = await response.json();
-
-                setUsuario(dados);
-
-            } catch (error) {
-
-                console.error("Erro ao carregar usuário:", error);
-
-                router.replace("/login");
-
-            } finally {
-
-                setCarregando(false);
-
-            }
-        }
-
-        carregarUsuario();
-
-    }, [router]);
+    const {
+        usuario,
+        carregando
+    } = useUsuario();
 
     if (carregando) {
 
@@ -65,7 +32,9 @@ export default function SistemaLayout({ children }) {
                     <i className="fas fa-spinner fa-spin"></i>
                 </div>
 
-                <p>Carregando sistema...</p>
+                <p>
+                    Carregando sistema...
+                </p>
 
             </div>
         );

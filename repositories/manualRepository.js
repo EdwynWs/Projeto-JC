@@ -74,4 +74,74 @@ export default class manualRepository extends Repository{
  
          return lista;
      }
+
+         async listarPorCategoria(catID) {
+
+        let sql = `
+            SELECT *
+            FROM manual
+            WHERE cat_id = ?
+            AND man_ativo = 1
+            ORDER BY man_voltagem, man_nome
+        `;
+
+        let valores = [catID];
+
+        let rows = await this.banco.ExecutaComando(
+            sql,
+            valores
+        );
+
+        let lista = [];
+
+        for (let row of rows) {
+
+            lista.push(
+                new manualEntity(
+                    row["man_id"],
+                    row["man_nome"],
+                    row["man_voltagem"],
+                    row["cat_id"],
+                    row["usu_id"],
+                    row["man_chave_r2"],
+                    row["man_ativo"],
+                    row["man_data_cadastro"]
+                )
+            );
+
+        }
+        return lista;
+    }
+
+        async buscarPorId(id) {
+        
+        let sql = `
+            SELECT *
+            FROM manual
+            WHERE man_id = ?
+            LIMIT 1
+        `;
+        
+        let rows = await this.banco.ExecutaComando(
+            sql,
+            [id]
+        );
+    
+        if (rows.length === 0) {
+            return null;
+        }
+    
+        let row = rows[0];
+    
+        return new manualEntity(
+            row["man_id"],
+            row["man_nome"],
+            row["man_voltagem"],
+            row["cat_id"],
+            row["usu_id"],
+            row["man_chave_r2"],
+            row["man_ativo"],
+            row["man_data_cadastro"]
+        );
+    }
 }
