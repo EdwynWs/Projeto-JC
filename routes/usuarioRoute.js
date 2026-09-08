@@ -1,12 +1,13 @@
 import express from 'express';
 import UsuarioController from '../controllers/usuarioController.js';
-import auth from '../middlewares/auth.js'
-
+import auth from "../middlewares/auth.js";
+import { somenteAdmin } from "../middlewares/somenteAdmin.js";
+import { somenteCliente } from "../middlewares/somenteCliente.js";
 const router = express.Router();
 
 const controladora = new UsuarioController();
 
-router.get("/", auth, (req, res) => {
+router.get("/", auth, somenteAdmin, (req, res) => {
     //#swagger.tags = ['Usuarios']
     //#swagger.summary = 'Retorna uma lista de todos os usuarios cadastrados'
     controladora.listarUsuarios(req, res);
@@ -24,7 +25,7 @@ router.post("/", (req, res) => {
     controladora.cadastroUsuario(req, res);
 })
 
-router.patch("/:id/inativar", auth, (req, res) => {
+router.patch("/:id/inativar", auth, somenteAdmin, (req, res) => {
     /* #swagger.security = [{
         "jwt": []
     }] */
@@ -47,7 +48,7 @@ router.post("/logout", (req, res) => {
     controladora.logout(req, res);
 })
 
-router.put("/:id",auth, (req, res) => {
+router.put("/:id",auth, somenteAdmin, (req, res) => {
     /* #swagger.security = [{
         "jwt": []
     }] */
@@ -62,10 +63,16 @@ router.get("/:id", (req, res) => {
     controladora.obter(req, res);
 })
 
-router.delete("/:id", auth, (req, res) => {
+router.delete("/:id", auth, somenteAdmin, (req, res) => {
   //#swagger.tags = ['Usuarios']
   //#swagger.summary = ['Deletar um usuario identificado pelo ID']
   controladora.deletar(req, res);
+})
+
+router.get("/logado", auth, (req, res) => {
+    //#swagger.tags = ['Usuarios']
+    //#swagger.summary = ['Consultar o próprio usuário']
+    controladora.usuarioLogado(req, res);
 })
 
 export default router;

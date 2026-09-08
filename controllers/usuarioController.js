@@ -166,24 +166,15 @@ export default class UsuarioController {
 
      try {
 
-         let {
-             usuarioNome,
-             usuarioEmail,
-             usuarioSenha
-         } = req.body;
+         let {usuarioNome, usuarioEmail, usuarioSenha} = req.body;
 
-         if (
-             !usuarioNome ||
-             !usuarioEmail ||
-             !usuarioSenha
-         ) {
+         if (!usuarioNome || !usuarioEmail || !usuarioSenha) {
              return res.status(400).json({
                  msg: "Todos os campos são obrigatórios."
              });
          }
 
-         let usuarioExistente =
-             await this.#repoUsuario.buscarPorEmail(usuarioEmail);
+         let usuarioExistente = await this.#repoUsuario.buscarPorEmail(usuarioEmail);
 
          if (usuarioExistente) {
              return res.status(400).json({
@@ -193,20 +184,11 @@ export default class UsuarioController {
 
          let senhaHash = await bcrypt.hash(usuarioSenha, 10);
 
-         let usuario = new UsuarioEntity(
-             0,
-             usuarioNome,
-             usuarioEmail,
-             senhaHash,
-             1,
-             1 
-         );
+         let usuario = new UsuarioEntity(0, usuarioNome, usuarioEmail, senhaHash, 1, 1);
 
-         let resultado =
-             await this.#repoUsuario.cadastrarUsuario(usuario);
+         let resultado = await this.#repoUsuario.cadastrarUsuario(usuario);
 
          if (resultado) {
-
              return res.status(201).json({
                  msg: "Conta criada com sucesso!"
              });
@@ -217,7 +199,7 @@ export default class UsuarioController {
              msg: "Não foi possível criar a conta."
          });
 
-     } catch (error) {
+     } catch(error){
 
          console.error(error);
 

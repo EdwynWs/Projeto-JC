@@ -1,0 +1,224 @@
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 250px;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #102b68;
+    color: white;
+
+    z-index: 1000;
+
+    box-shadow: 4px 0 18px rgba(0, 0, 0, 0.08);
+}
+
+
+/* LOGO */
+
+.logo {
+    height: 82px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 24px;
+
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+
+.logoIcon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #f3b923;
+
+    color: #102b68;
+
+    font-size: 20px;
+
+    margin-right: 12px;
+}
+
+.logoTexto {
+    display: flex;
+    flex-direction: column;
+}
+
+.logoTexto strong {
+    font-size: 18px;
+    line-height: 20px;
+}
+
+.logoTexto span {
+    margin-top: 3px;
+
+    font-size: 10px;
+    letter-spacing: 0.5px;
+
+    opacity: 0.7;
+}
+
+
+/* PERFIL */
+
+.perfil {
+    display: flex;
+    align-items: center;
+
+    margin: 20px 15px;
+
+    padding: 12px;
+
+    border-radius: 12px;
+
+    background: rgba(255,255,255,0.08);
+}
+
+.avatar {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: rgba(255,255,255,0.15);
+
+    margin-right: 10px;
+}
+
+.perfilInfo {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.perfilInfo strong {
+    font-size: 13px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.perfilInfo span {
+    margin-top: 3px;
+
+    font-size: 11px;
+
+    color: #f3c94f;
+}
+
+
+/* MENU */
+
+.menu {
+    flex: 1;
+
+    padding: 0 14px;
+
+    overflow-y: auto;
+}
+
+.menuTitulo {
+    margin: 22px 10px 8px;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    color: rgba(255,255,255,0.45);
+}
+
+
+.menuItem {
+    display: flex;
+    align-items: center;
+
+    height: 46px;
+
+    padding: 0 14px;
+
+    margin-bottom: 4px;
+
+    border-radius: 9px;
+
+    color: rgba(255,255,255,0.82);
+
+    text-decoration: none;
+
+    font-size: 14px;
+
+    transition: 0.2s;
+}
+
+.menuItem i {
+    width: 22px;
+
+    font-size: 15px;
+
+    margin-right: 10px;
+}
+
+.menuItem:hover {
+    background: rgba(255,255,255,0.08);
+
+    color: white;
+}
+
+.menuItem.ativo {
+    background: #f3b923;
+
+    color: #102b68;
+
+    font-weight: 600;
+
+    box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+}
+
+
+/* RODAPÉ */
+
+.rodape {
+    padding: 18px 24px;
+
+    color: rgba(255,255,255,0.45);
+}
+
+.rodapeLinha {
+    height: 1px;
+
+    background: rgba(255,255,255,0.10);
+
+    margin-bottom: 15px;
+}
+
+.rodape span {
+    display: block;
+
+    font-size: 11px;
+}
+
+.rodape small {
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 10px;
+}

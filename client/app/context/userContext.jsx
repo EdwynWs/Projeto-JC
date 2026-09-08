@@ -1,58 +1,140 @@
-'use client'
+"use client";
 
-import { createContext, useEffect, useState } from "react";
-import Loading from "../components/loading";
-import ApiClient from "../../utils/apiClient";
+import { createContext, useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-const UserContext = createContext();
+const UserContext = createContext(null);
 
-export const UserProvider = ({ children }) => {
+export function UserProvider({ children }) {
+
+    const router = useRouter();
+
     const [usuario, setUsuario] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    async function carregarUsuario() {
-        try {
-            const usuarioSalvo = localStorage.getItem("usuario");
-
-            if (usuarioSalvo) {
-                setUsuario(JSON.parse(usuarioSalvo));
-            }
-
-            const resposta = await ApiClient.get("usuario/logado");
-
-            if (resposta) {
-                const usuarioLogado = resposta.usuario ?? resposta;
-
-                setUsuario(usuarioLogado);
-                localStorage.setItem("usuario", JSON.stringify(usuarioLogado));
-            }
-        } catch (error) {
-            setUsuario(null);
-            localStorage.removeItem("usuario");
-        }
-
-        setLoading(false);
-    }
-
-    function limparUsuario() {
-        setUsuario(null);
-        localStorage.removeItem("usuario");
-    }
+    const [carregando, setCarregando] = useState(true);
 
     useEffect(() => {
+
+        async function carregarUsuario() {
+
+            try {
+
+                const response = await fetch(
+                    "http://localhost:5001/usuario/logado",
+                    {
+                        method: "GET",
+                        credentials: "include",
+                    }
+                );
+
+                if (!response.ok) {
+
+                    setUsuario(null);
+
+                    if (
+                        response.status === 401 ||
+                        response.status === 403
+                    ) {
+                        router.replace("/login");
+                    }
+
+                    return;
+                }
+
+                const dados = await response.json();
+
+                setUsuario(dados);
+
+            } catch (error) {
+
+                console.error("Erro ao carregar usuário:", error);
+
+                setUsuario(null);
+
+                router.replace("/login");
+
+            } finally {
+
+                setCarregando(false);
+
+            }
+        }
+
         carregarUsuario();
-    }, []);
+
+    }, [router]);
+
+
+    function ehAdmin() {
+
+        if (!usuario) {
+            return false;
+        }
+
+        return Number(usuario.per_id) === 2;
+    }
+
+
+    function ehCliente() {
+
+        if (!usuario) {
+            return false;
+        }
+
+        return Number(usuario.per_id) === 1;
+    }
+
+
+    async function logout() {
+
+        try {
+
+            await fetch(
+                "http://localhost:5001/usuario/logout",
+                {
+                    method: "POST",
+                    credentials: "include",
+                }
+            );
+
+        } catch (error) {
+
+            console.error("Erro ao fazer logout:", error);
+
+        } finally {
+
+            setUsuario(null);
+
+            router.replace("/login");
+
+        }
+    }
+
 
     return (
-        <UserContext.Provider value={{
-            usuario,
-            setUsuario,
-            carregarUsuario,
-            limparUsuario
-        }}>
-            {loading ? <Loading /> : children}
+        <UserContext.Provider
+            value={{
+                usuario,
+                carregando,
+                ehAdmin,
+                ehCliente,
+                logout,
+            }}
+        >
+            {children}
         </UserContext.Provider>
     );
-};
+}
 
-export default UserContext;
+
+export function useUsuario() {
+
+    const contexto = useContext(UserContext);
+
+    if (!contexto) {
+        throw new Error(
+            "useUsuario deve ser utilizado dentro de UserProvider"
+        );
+    }
+
+    return contexto;
+}

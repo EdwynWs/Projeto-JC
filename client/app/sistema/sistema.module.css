@@ -1,0 +1,30 @@
+.sistema {
+    min-height: 100vh;
+    display: flex;
+    background: #f5f7fb;
+}
+
+.conteudo {
+    flex: 1;
+    min-width: 0;
+    margin-left: 250px;
+}
+
+.main {
+    padding: 30px;
+    min-height: calc(100vh - 70px);
+}
+
+.loading {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 16px;
+    color: #23428a;
+}
+
+.loading i {
+    font-size: 22px;
+}

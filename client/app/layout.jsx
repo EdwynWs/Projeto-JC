@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "FippConsórcio",
-  description: "Sistema de Gestão de Consórcios",
+    title: "JCortiça Painéis Elétricos",
+    description: "Sistema de gerenciamento de manuais e projetos elétricos",
 };
 
 export default function RootLayout({ children }) {
