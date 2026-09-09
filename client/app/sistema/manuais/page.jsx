@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-const [abrindoManual, setAbrindoManual] = useState(null);
 
 const API_URL =
     process.env.NEXT_PUBLIC_API_URL ||
@@ -18,6 +17,8 @@ const TENSOES = [
     {
         id: "220V",
         nome: "220V",
+
+        
         icone: "fa-bolt"
     },
     {
@@ -28,6 +29,8 @@ const TENSOES = [
 ];
 
 export default function ManuaisPage() {
+
+    const [abrindoManual, setAbrindoManual] = useState(null);
 
     const router = useRouter();
 

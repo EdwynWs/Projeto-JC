@@ -6,7 +6,7 @@ import {
     getSignedUrl
 } from "@aws-sdk/s3-request-presigner";
 
-import r2 from "../config/r2.js";
+import r2 from "../db/r2.js";
 
 class R2Service {
 
