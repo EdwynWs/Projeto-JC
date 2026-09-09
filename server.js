@@ -2,6 +2,7 @@ import express from 'express';
 import usuarioRouter from './routes/usuarioRoute.js';
 import categoriaRouter from './routes/categoriaRoute.js';
 import manualRouter from './routes/manualRoute.js';
+import projetoRouter from './routes/projetoRoute.js';
 
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -47,7 +48,7 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(outputJson));
 app.use("/usuario", usuarioRouter);
 app.use("/categoria", categoriaRouter);
 app.use("/manual", manualRouter);
-
+app.use("/projeto", projetoRouter);
 // servidor
 server.listen(5001, function() {
     console.log('backend em execução');

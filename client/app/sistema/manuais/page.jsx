@@ -18,7 +18,7 @@ const TENSOES = [
         id: "220V",
         nome: "220V",
 
-        
+
         icone: "fa-bolt"
     },
     {
@@ -31,38 +31,15 @@ const TENSOES = [
 export default function ManuaisPage() {
 
     const [abrindoManual, setAbrindoManual] = useState(null);
-
     const router = useRouter();
-
     const searchParams = useSearchParams();
-
-    const categoriaId =
-        searchParams.get("categoria");
-
-    const [categoria, setCategoria] =
-        useState(null);
-
-    const [manuais, setManuais] =
-        useState([]);
-
-    const [tensaoSelecionada, setTensaoSelecionada] =
-        useState("TODAS");
-
-    const [busca, setBusca] =
-        useState("");
-
-    const [carregando, setCarregando] =
-        useState(true);
-
-    const [erro, setErro] =
-        useState(false);
-
-
-    /*
-     * =====================================================
-     * CARREGAR CATEGORIA + MANUAIS
-     * =====================================================
-     */
+    const categoriaId = searchParams.get("categoria");
+    const [categoria, setCategoria] = useState(null);
+    const [manuais, setManuais] = useState([]);
+    const [tensaoSelecionada, setTensaoSelecionada] = useState("TODAS");
+    const [busca, setBusca] = useState("");
+    const [carregando, setCarregando] = useState(true);
+    const [erro, setErro] = useState(false);
 
     useEffect(() => {
 
@@ -73,14 +50,8 @@ export default function ManuaisPage() {
         async function carregarDados() {
 
             try {
-
                 setCarregando(true);
                 setErro(false);
-
-                /*
-                 * Busca categorias para descobrir
-                 * o nome da categoria.
-                 */
 
                 const categoriasResponse =
                     await fetch(
@@ -101,20 +72,12 @@ export default function ManuaisPage() {
 
                 const categoriaEncontrada =
                     categorias.find(
-                        (item) =>
-                            Number(item.catID) ===
-                            Number(categoriaId)
+                        (item) => Number(item.catID) === Number(categoriaId)
                     );
 
                 setCategoria(
                     categoriaEncontrada || null
                 );
-
-
-                /*
-                 * Busca os manuais somente
-                 * da categoria selecionada.
-                 */
 
                 const manuaisResponse =
                     await fetch(
@@ -130,8 +93,7 @@ export default function ManuaisPage() {
                     );
                 }
 
-                const dados =
-                    await manuaisResponse.json();
+                const dados = await manuaisResponse.json();
 
                 setManuais(
                     Array.isArray(dados)
@@ -140,58 +102,35 @@ export default function ManuaisPage() {
                 );
 
             } catch (error) {
-
                 console.error(error);
-
                 setErro(true);
-
             } finally {
-
                 setCarregando(false);
-
             }
-
         }
 
         carregarDados();
 
     }, [categoriaId]);
 
-
-    /*
-     * =====================================================
-     * FILTRO
-     * =====================================================
-     */
-
     const manuaisFiltrados = useMemo(() => {
 
-        const termo =
-            busca.trim().toLowerCase();
+        const termo = busca.trim().toLowerCase();
 
         return manuais.filter((manual) => {
 
-            const nome =
-                manual.manNome?.toLowerCase() ||
-                "";
+            const nome = manual.manNome?.toLowerCase() || "";
 
-            const chave =
-                manual.manChaveR2?.toLowerCase() ||
-                "";
+            const chave = manual.manChaveR2?.toLowerCase() || "";
 
             const tensao =
                 normalizarTensao(
                     manual.manVoltagem
                 );
 
-            const correspondeBusca =
-                !termo ||
-                nome.includes(termo) ||
-                chave.includes(termo);
+            const correspondeBusca = !termo || nome.includes(termo) || chave.includes(termo);
 
-            const correspondeTensao =
-                tensaoSelecionada === "TODAS" ||
-                tensao === tensaoSelecionada;
+            const correspondeTensao = tensaoSelecionada === "TODAS" || tensao === tensaoSelecionada;
 
             return (
                 correspondeBusca &&
@@ -205,13 +144,6 @@ export default function ManuaisPage() {
         busca,
         tensaoSelecionada
     ]);
-
-
-    /*
-     * =====================================================
-     * AGRUPAR POR TENSÃO
-     * =====================================================
-     */
 
     const grupos = useMemo(() => {
 
@@ -234,13 +166,6 @@ export default function ManuaisPage() {
 
     }, [manuaisFiltrados]);
 
-
-    /*
-     * =====================================================
-     * RETORNAR PARA DASHBOARD
-     * =====================================================
-     */
-
     function voltar() {
 
         router.push(
@@ -248,13 +173,6 @@ export default function ManuaisPage() {
         );
 
     }
-
-
-    /*
-     * =====================================================
-     * ABRIR MANUAL
-     * =====================================================
-     */
 
     async function abrirManual(manual) {
 
@@ -306,13 +224,6 @@ export default function ManuaisPage() {
         }
     }
 
-
-    /*
-     * =====================================================
-     * SEM CATEGORIA
-     * =====================================================
-     */
-
     if (!categoriaId) {
 
         return (
@@ -344,13 +255,6 @@ export default function ManuaisPage() {
 
     }
 
-
-    /*
-     * =====================================================
-     * LOADING
-     * =====================================================
-     */
-
     if (carregando) {
 
         return (
@@ -366,13 +270,6 @@ export default function ManuaisPage() {
         );
 
     }
-
-
-    /*
-     * =====================================================
-     * ERRO
-     * =====================================================
-     */
 
     if (erro) {
 
@@ -405,16 +302,8 @@ export default function ManuaisPage() {
 
     }
 
-
-    /*
-     * =====================================================
-     * RENDER
-     * =====================================================
-     */
-
     return (
         <div className="manual-page">
-
 
             {/* =================================================
                 CABEÇALHO
@@ -673,13 +562,6 @@ export default function ManuaisPage() {
     );
 }
 
-
-/*
- * =========================================================
- * CARD DO MANUAL
- * =========================================================
- */
-
 function ManualCard({
     manual,
     onOpen
@@ -745,13 +627,6 @@ function ManualCard({
     );
 }
 
-
-/*
- * =========================================================
- * NORMALIZAR TENSÃO
- * =========================================================
- */
-
 function normalizarTensao(valor) {
 
     if (!valor) {
@@ -783,28 +658,11 @@ function normalizarTensao(valor) {
     return texto;
 }
 
-
-/*
- * =========================================================
- * EXTRAIR PASTA DO R2
- * =========================================================
- */
-
 function extrairPasta(chave) {
 
     if (!chave) {
         return "";
     }
-
-    /*
-     * Exemplo:
-     *
-     * Aviario/220V/Controle/manual.pdf
-     *
-     * retorna:
-     *
-     * Controle
-     */
 
     const partes =
         chave
@@ -815,20 +673,11 @@ function extrairPasta(chave) {
         return "";
     }
 
-    /*
-     * Remove o arquivo.
-     */
-
     partes.pop();
 
     if (partes.length === 0) {
         return "";
     }
-
-    /*
-     * Mostra somente a pasta
-     * imediatamente acima do PDF.
-     */
 
     return partes[partes.length - 1];
 }
