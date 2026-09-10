@@ -1,234 +1,342 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import toast from "react-hot-toast";
 
 import { useUsuario } from "../../../context/userContext";
-import ApiClient from "@/utils/apiClient";
+
+const API_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 
 export default function AlterarCategoriaPage() {
-
-    return (
-        <Suspense fallback={<div className="sistema-loading-inline">
-            <i className="fas fa-spinner fa-spin"></i>
-            Carregando...
-        </div>}>
-            <AlterarCategoriaConteudo />
-        </Suspense>
-    );
-}
-
-function AlterarCategoriaConteudo() {
-
     const router = useRouter();
-    const params = useSearchParams();
+    const searchParams = useSearchParams();
 
-    const { ehAdmin } = useUsuario();
+    const { usuario, carregando: carregandoUsuario, ehAdmin } = useUsuario();
 
-    const categoriaId = params.get("id");
+    const [catNome, setCatNome] = useState("");
+    const [catDescricao, setCatDescricao] = useState("");
+    const [catAtivo, setCatAtivo] = useState(true);
 
     const [carregando, setCarregando] = useState(true);
     const [salvando, setSalvando] = useState(false);
-    const [excluindo, setExcluindo] = useState(false);
-    const [erro, setErro] = useState(false);
 
-    const nome = useRef(null);
-    const descricao = useRef(null);
-    const ativo = useRef(null);
+    const [erro, setErro] = useState("");
+    const [sucesso, setSucesso] = useState("");
+
+    const id = searchParams.get("id");
 
     useEffect(() => {
+        if (carregandoUsuario) return;
 
-        if (!categoriaId) {
-            setErro(true);
+        if (!usuario) return;
+
+        if (!ehAdmin()) {
+            router.replace("/sistema/home");
+            return;
+        }
+
+        if (!id) {
+            setErro("ID da categoria não informado.");
             setCarregando(false);
             return;
         }
 
-        async function carregar() {
+        carregarCategoria();
+    }, [id, usuario, carregandoUsuario]);
 
+    async function carregarCategoria() {
+        try {
             setCarregando(true);
-            setErro(false);
+            setErro("");
 
-            const categorias = await ApiClient.get("categoria/listar");
+            const response = await fetch(
+                `${API_URL}/categoria/listar`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                }
+            );
 
-            const categoria = Array.isArray(categorias)
-                ? categorias.find(
-                    (item) => Number(item.catID) === Number(categoriaId)
-                )
-                : null;
-
-            if (!categoria) {
-                setErro(true);
-                setCarregando(false);
-                return;
+            if (!response.ok) {
+                throw new Error(
+                    "Não foi possível carregar as categorias."
+                );
             }
 
-            nome.current.value = categoria.catNome || "";
-            descricao.current.value = categoria.catDescricao || "";
-            ativo.current.checked = !!categoria.catAtivo;
+            const categorias = await response.json();
 
+            const categoria = categorias.find(
+                (item) =>
+                    Number(item.catID ?? item.cat_id) === Number(id)
+            );
+
+            if (!categoria) {
+                throw new Error(
+                    "Categoria não encontrada."
+                );
+            }
+
+            setCatNome(
+                categoria.catNome ??
+                categoria.cat_nome ??
+                ""
+            );
+
+            setCatDescricao(
+                categoria.catDescricao ??
+                categoria.cat_descricao ??
+                ""
+            );
+
+            setCatAtivo(
+                Number(
+                    categoria.catAtivo ??
+                    categoria.cat_ativo
+                ) === 1
+            );
+        } catch (error) {
+            console.error(
+                "Erro ao carregar categoria:",
+                error
+            );
+
+            setErro(
+                error.message ||
+                "Erro ao carregar categoria."
+            );
+        } finally {
             setCarregando(false);
         }
+    }
 
-        carregar();
+    async function salvar(e) {
+        e.preventDefault();
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [categoriaId]);
+        setErro("");
+        setSucesso("");
 
-    if (!ehAdmin()) {
+        if (!catNome.trim()) {
+            setErro("Informe o nome da categoria.");
+            return;
+        }
 
+        try {
+            setSalvando(true);
+
+            const response = await fetch(
+                `${API_URL}/categoria/modificar/${id}`,
+                {
+                    method: "PUT",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        catNome: catNome.trim(),
+                        catDescricao: catDescricao.trim(),
+                        catAtivo: catAtivo ? 1 : 0,
+                    }),
+                }
+            );
+
+            const dados = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    dados.msg ||
+                    dados.erro ||
+                    "Não foi possível alterar a categoria."
+                );
+            }
+
+            setSucesso(
+                "Categoria alterada com sucesso!"
+            );
+
+            setTimeout(() => {
+                router.push("/sistema/categorias");
+            }, 800);
+        } catch (error) {
+            console.error(
+                "Erro ao alterar categoria:",
+                error
+            );
+
+            setErro(
+                error.message ||
+                "Erro ao alterar categoria."
+            );
+        } finally {
+            setSalvando(false);
+        }
+    }
+
+    if (carregandoUsuario || carregando) {
         return (
-            <div className="sistema-empty">
-
-                <div className="sistema-empty-icon">
-                    <i className="fas fa-lock"></i>
-                </div>
-
-                <h2>Acesso restrito</h2>
-
-                <p>
-                    Apenas administradores podem
-                    alterar categorias.
-                </p>
-
-                <Link href="/sistema/home" className="btn-sistema">
-                    <i className="fas fa-arrow-left"></i>
-                    Voltar ao dashboard
-                </Link>
-
+            <div className="sistema-loading-inline">
+                <i className="fas fa-spinner fa-spin"></i>
+                <span>Carregando categoria...</span>
             </div>
         );
     }
 
-    async function salvar(e) {
-
-        e.preventDefault();
-
-        const catNome = nome.current.value.trim();
-
-        if (!catNome) {
-            toast.error("O nome da categoria é obrigatório.");
-            return;
-        }
-
-        setSalvando(true);
-
-        const resposta = await ApiClient.put(
-            `categoria/modificar/${categoriaId}`,
-            {
-                catNome,
-                catDescricao: descricao.current.value.trim(),
-                catAtivo: ativo.current.checked
-            }
-        );
-
-        setSalvando(false);
-
-        if (resposta) {
-            toast.success(resposta.msg || "Categoria atualizada com sucesso!");
-            router.push("/sistema/categorias");
-        }
-    }
-
-    async function excluir() {
-
-        const confirmar = confirm(
-            "Deseja realmente excluir esta categoria? Os manuais vinculados a ela deixarão de ser encontrados."
-        );
-
-        if (!confirmar) {
-            return;
-        }
-
-        setExcluindo(true);
-
-        const resposta = await ApiClient.delete(
-            `categoria/excluir/${categoriaId}`
-        );
-
-        setExcluindo(false);
-
-        if (resposta) {
-            toast.success(resposta.msg || "Categoria excluída com sucesso!");
-            router.push("/sistema/categorias");
-        }
+    if (!usuario || !ehAdmin()) {
+        return null;
     }
 
     return (
         <div className="sistema-page">
 
             <div className="sistema-page-header">
-
                 <div>
                     <span className="sistema-page-kicker">
-                        ADMINISTRAÇÃO
+                        Administração
                     </span>
 
-                    <h1>Alterar categoria</h1>
+                    <h1>
+                        Alterar categoria
+                    </h1>
 
-                    <p>Atualize as informações desta categoria.</p>
+                    <p>
+                        Atualize as informações da categoria.
+                    </p>
                 </div>
 
-                <Link href="/sistema/categorias" className="btn-sistema-secondary">
+                <Link
+                    href="/sistema/categorias"
+                    className="btn-sistema btn-sistema-secondary"
+                >
                     <i className="fas fa-arrow-left"></i>
                     Voltar
                 </Link>
-
             </div>
 
-            {carregando && (
-                <div className="sistema-loading-inline">
-                    <i className="fas fa-spinner fa-spin"></i>
-                    Carregando categoria...
-                </div>
-            )}
-
-            {!carregando && erro && (
+            {erro && (
                 <div className="sistema-alert sistema-alert-error">
-                    <i className="fas fa-triangle-exclamation"></i>
-                    Categoria não encontrada.
+                    <i className="fas fa-exclamation-circle"></i>
+                    <span>{erro}</span>
                 </div>
             )}
 
-            {!carregando && !erro && (
+            {sucesso && (
+                <div className="sistema-alert sistema-alert-success">
+                    <i className="fas fa-check-circle"></i>
+                    <span>{sucesso}</span>
+                </div>
+            )}
 
-                <form className="sistema-form-card" onSubmit={salvar}>
+            <form
+                className="cadastro-form"
+                onSubmit={salvar}
+            >
 
-                    <div className="sistema-form-row">
-                        <div className="sistema-form-group">
-                            <label htmlFor="catNome">Nome da categoria</label>
+                <div className="cadastro-card">
+
+                    <div className="cadastro-card-header">
+                        <div className="cadastro-card-icon">
+                            <i className="fas fa-folder"></i>
+                        </div>
+
+                        <div>
+                            <h2>
+                                Dados da categoria
+                            </h2>
+
+                            <p>
+                                Preencha as informações abaixo.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="cadastro-card-body">
+
+                        <div className="cadastro-form-group">
+                            <label htmlFor="catNome">
+                                Nome da categoria
+                                <span>*</span>
+                            </label>
+
                             <input
                                 id="catNome"
-                                ref={nome}
                                 type="text"
-                                maxLength={120}
+                                value={catNome}
+                                onChange={(e) =>
+                                    setCatNome(e.target.value)
+                                }
+                                placeholder="Ex.: Aviário"
+                                maxLength={200}
+                                disabled={salvando}
                             />
                         </div>
-                    </div>
 
-                    <div className="sistema-form-row">
-                        <div className="sistema-form-group">
-                            <label htmlFor="catDescricao">Descrição</label>
+                        <div className="cadastro-form-group">
+                            <label htmlFor="catDescricao">
+                                Descrição
+                            </label>
+
                             <textarea
                                 id="catDescricao"
-                                ref={descricao}
-                                maxLength={255}
+                                value={catDescricao}
+                                onChange={(e) =>
+                                    setCatDescricao(e.target.value)
+                                }
+                                placeholder="Descreva a categoria..."
+                                rows={5}
+                                disabled={salvando}
                             />
                         </div>
+
+                        <div className="cadastro-form-group">
+                            <label>
+                                Status
+                            </label>
+
+                            <div className="cadastro-switch">
+
+                                <label className="cadastro-switch-label">
+
+                                    <input
+                                        type="checkbox"
+                                        checked={catAtivo}
+                                        onChange={(e) =>
+                                            setCatAtivo(
+                                                e.target.checked
+                                            )
+                                        }
+                                        disabled={salvando}
+                                    />
+
+                                    <span className="cadastro-switch-slider"></span>
+
+                                    <span>
+                                        {catAtivo
+                                            ? "Categoria ativa"
+                                            : "Categoria inativa"}
+                                    </span>
+
+                                </label>
+
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div className="sistema-form-check">
-                        <input id="catAtivo" ref={ativo} type="checkbox" />
-                        <label htmlFor="catAtivo">
-                            Categoria ativa (visível para os clientes)
-                        </label>
-                    </div>
+                    <div className="cadastro-card-footer">
 
-                    <div className="sistema-form-actions">
+                        <Link
+                            href="/sistema/categorias"
+                            className="btn-sistema btn-sistema-secondary"
+                        >
+                            Cancelar
+                        </Link>
 
-                        <button type="submit" className="btn-sistema" disabled={salvando}>
+                        <button
+                            type="submit"
+                            className="btn-sistema btn-sistema-primary"
+                            disabled={salvando}
+                        >
                             {salvando ? (
                                 <>
                                     <i className="fas fa-spinner fa-spin"></i>
@@ -236,39 +344,17 @@ function AlterarCategoriaConteudo() {
                                 </>
                             ) : (
                                 <>
-                                    <i className="fas fa-check"></i>
+                                    <i className="fas fa-save"></i>
                                     Salvar alterações
                                 </>
                             )}
                         </button>
 
-                        <button
-                            type="button"
-                            className="btn-sistema-secondary btn-sistema-danger"
-                            onClick={excluir}
-                            disabled={excluindo}
-                        >
-                            {excluindo ? (
-                                <>
-                                    <i className="fas fa-spinner fa-spin"></i>
-                                    Excluindo...
-                                </>
-                            ) : (
-                                <>
-                                    <i className="fas fa-trash"></i>
-                                    Excluir categoria
-                                </>
-                            )}
-                        </button>
-
-                        <Link href="/sistema/categorias" className="btn-sistema-secondary">
-                            Cancelar
-                        </Link>
-
                     </div>
 
-                </form>
-            )}
+                </div>
+
+            </form>
 
         </div>
     );
