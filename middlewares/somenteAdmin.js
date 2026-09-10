@@ -1,6 +1,6 @@
 const PERFIL_ADMIN = 2;
 
-export function somenteAdmin(req, res, next) {
+export default async function somenteAdmin(req, res, next) {
 
     try {
 

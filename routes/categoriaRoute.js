@@ -1,12 +1,12 @@
 import express from 'express';
 import categoriaController from '../controllers/categoriaController.js';
 import auth from "../middlewares/auth.js";
+import somenteAdmin from "../middlewares/somenteAdmin.js";
 
 const router = express.Router();
-
 const controller = new categoriaController();
 
-router.post("/cadastrar", auth, (req, res) => {
+router.post("/cadastrar", auth, somenteAdmin, (req, res) => {
     /* #swagger.security = [{
     "jwt": []
     }] */
@@ -15,7 +15,7 @@ router.post("/cadastrar", auth, (req, res) => {
     controller.cadastrar(req, res);
 });
 
-router.get("/listar", auth, (req, res) => {
+router.get("/listar", auth, somenteAdmin, (req, res) => {
     /* #swagger.security = [{
     "jwt": []
     }] */
@@ -24,7 +24,7 @@ router.get("/listar", auth, (req, res) => {
     controller.listar(req, res);
 });
 
-router.delete("/excluir/:id", auth, (req, res) => {
+router.delete("/excluir/:id", auth, somenteAdmin, (req, res) => {
     /* #swagger.security = [{
     "jwt": []
     }] */
@@ -33,7 +33,7 @@ router.delete("/excluir/:id", auth, (req, res) => {
     controller.excluir(req, res);
 });
 
-router.put("/modificar/:id", auth, (req, res) => {
+router.put("/modificar/:id", auth, somenteAdmin, (req, res) => {
     /* #swagger.security = [{
     "jwt": []
     }] */
