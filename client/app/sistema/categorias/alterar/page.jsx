@@ -1,31 +1,56 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
 
 import { useUsuario } from "../../../context/userContext";
+import ApiClient from "@/utils/apiClient";
 
-const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+const VOLTAGENS = ["Monofásico", "220V", "380V"];
 
-export default function AlterarCategoriaPage() {
+export default function AlterarManualPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="sistema-loading-inline">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    Carregando...
+                </div>
+            }
+        >
+            <AlterarManualConteudo />
+        </Suspense>
+    );
+}
+
+function AlterarManualConteudo() {
     const router = useRouter();
-    const searchParams = useSearchParams();
+    const params = useSearchParams();
 
-    const { usuario, carregando: carregandoUsuario, ehAdmin } = useUsuario();
+    const { usuario, carregando: carregandoUsuario, ehAdmin } =
+        useUsuario();
 
-    const [catNome, setCatNome] = useState("");
-    const [catDescricao, setCatDescricao] = useState("");
-    const [catAtivo, setCatAtivo] = useState(true);
+    const manualId = params.get("id");
+
+    const [categorias, setCategorias] = useState([]);
+
+    const [catIDOriginal, setCatIDOriginal] = useState(null);
+
+    const [formulario, setFormulario] = useState({
+        manNome: "",
+        manVoltagem: VOLTAGENS[0],
+        catID: "",
+        manChaveR2: "",
+        manAtivo: true
+    });
 
     const [carregando, setCarregando] = useState(true);
     const [salvando, setSalvando] = useState(false);
+    const [excluindo, setExcluindo] = useState(false);
 
-    const [erro, setErro] = useState("");
-    const [sucesso, setSucesso] = useState("");
-
-    const id = searchParams.get("id");
+    const [erro, setErro] = useState(false);
 
     useEffect(() => {
         if (carregandoUsuario) return;
@@ -37,139 +62,197 @@ export default function AlterarCategoriaPage() {
             return;
         }
 
-        if (!id) {
-            setErro("ID da categoria não informado.");
+        if (!manualId) {
+            setErro(true);
             setCarregando(false);
             return;
         }
 
-        carregarCategoria();
-    }, [id, usuario, carregandoUsuario]);
+        carregar();
+    }, [manualId, usuario, carregandoUsuario]);
 
-    async function carregarCategoria() {
+    async function carregar() {
         try {
             setCarregando(true);
-            setErro("");
+            setErro(false);
 
-            const response = await fetch(
-                `${API_URL}/categoria/listar`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                }
-            );
+            const [categoriasResp, manuaisResp] =
+                await Promise.all([
+                    ApiClient.get("categoria/listar"),
+                    ApiClient.get("manual/listar")
+                ]);
 
-            if (!response.ok) {
-                throw new Error(
-                    "Não foi possível carregar as categorias."
-                );
-            }
+            const listaCategorias = Array.isArray(categoriasResp)
+                ? categoriasResp
+                : [];
 
-            const categorias = await response.json();
+            setCategorias(listaCategorias);
 
-            const categoria = categorias.find(
+            const listaManuais = Array.isArray(manuaisResp)
+                ? manuaisResp
+                : [];
+
+            const manual = listaManuais.find(
                 (item) =>
-                    Number(item.catID ?? item.cat_id) === Number(id)
+                    Number(item.manID) === Number(manualId)
             );
 
-            if (!categoria) {
-                throw new Error(
-                    "Categoria não encontrada."
-                );
+            if (!manual) {
+                setErro(true);
+                return;
             }
 
-            setCatNome(
-                categoria.catNome ??
-                categoria.cat_nome ??
-                ""
-            );
+            setFormulario({
+                manNome: manual.manNome || "",
+                manVoltagem:
+                    manual.manVoltagem || VOLTAGENS[0],
+                catID:
+                    manual.catID !== null &&
+                    manual.catID !== undefined
+                        ? String(manual.catID)
+                        : "",
+                manChaveR2: manual.manChaveR2 || "",
+                manAtivo:
+                    Number(manual.manAtivo) === 1 ||
+                    manual.manAtivo === true
+            });
 
-            setCatDescricao(
-                categoria.catDescricao ??
-                categoria.cat_descricao ??
-                ""
-            );
-
-            setCatAtivo(
-                Number(
-                    categoria.catAtivo ??
-                    categoria.cat_ativo
-                ) === 1
-            );
+            setCatIDOriginal(manual.catID);
         } catch (error) {
             console.error(
-                "Erro ao carregar categoria:",
+                "Erro ao carregar manual:",
                 error
             );
 
-            setErro(
+            setErro(true);
+
+            toast.error(
                 error.message ||
-                "Erro ao carregar categoria."
+                    "Não foi possível carregar o manual."
             );
         } finally {
             setCarregando(false);
         }
     }
 
+    function alterarCampo(campo, valor) {
+        setFormulario((anterior) => ({
+            ...anterior,
+            [campo]: valor
+        }));
+    }
+
     async function salvar(e) {
         e.preventDefault();
 
-        setErro("");
-        setSucesso("");
+        setErro(false);
 
-        if (!catNome.trim()) {
-            setErro("Informe o nome da categoria.");
+        const manNome = formulario.manNome.trim();
+        const manVoltagem = formulario.manVoltagem;
+        const catID = formulario.catID;
+        const manChaveR2 =
+            formulario.manChaveR2.trim();
+
+        if (!manNome) {
+            toast.error(
+                "O nome do manual é obrigatório."
+            );
+            return;
+        }
+
+        if (!catID) {
+            toast.error(
+                "Selecione a categoria do manual."
+            );
+            return;
+        }
+
+        if (!manChaveR2) {
+            toast.error(
+                "Informe a chave (caminho) do arquivo no armazenamento."
+            );
             return;
         }
 
         try {
             setSalvando(true);
 
-            const response = await fetch(
-                `${API_URL}/categoria/modificar/${id}`,
+            const resposta = await ApiClient.put(
+                `manual/modificar/${manualId}`,
                 {
-                    method: "PUT",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        catNome: catNome.trim(),
-                        catDescricao: catDescricao.trim(),
-                        catAtivo: catAtivo ? 1 : 0,
-                    }),
+                    manNome,
+                    manVoltagem,
+                    catID: Number(catID),
+                    manChaveR2,
+                    manAtivo: formulario.manAtivo
                 }
             );
 
-            const dados = await response.json();
+            if (resposta) {
+                toast.success(
+                    resposta.msg ||
+                        "Manual atualizado com sucesso!"
+                );
 
-            if (!response.ok) {
-                throw new Error(
-                    dados.msg ||
-                    dados.erro ||
-                    "Não foi possível alterar a categoria."
+                router.push(
+                    `/sistema/manuais?categoria=${catID}`
                 );
             }
-
-            setSucesso(
-                "Categoria alterada com sucesso!"
-            );
-
-            setTimeout(() => {
-                router.push("/sistema/categorias");
-            }, 800);
         } catch (error) {
             console.error(
-                "Erro ao alterar categoria:",
+                "Erro ao alterar manual:",
                 error
             );
 
-            setErro(
+            toast.error(
                 error.message ||
-                "Erro ao alterar categoria."
+                    "Não foi possível alterar o manual."
             );
         } finally {
             setSalvando(false);
+        }
+    }
+
+    async function excluir() {
+        const confirmar = confirm(
+            "Deseja realmente excluir este manual?"
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        try {
+            setExcluindo(true);
+
+            const resposta = await ApiClient.delete(
+                `manual/excluir/${manualId}`
+            );
+
+            if (resposta) {
+                toast.success(
+                    resposta.msg ||
+                        "Manual excluído com sucesso!"
+                );
+
+                router.push(
+                    catIDOriginal
+                        ? `/sistema/manuais?categoria=${catIDOriginal}`
+                        : "/sistema/categorias"
+                );
+            }
+        } catch (error) {
+            console.error(
+                "Erro ao excluir manual:",
+                error
+            );
+
+            toast.error(
+                error.message ||
+                    "Não foi possível excluir o manual."
+            );
+        } finally {
+            setExcluindo(false);
         }
     }
 
@@ -177,7 +260,7 @@ export default function AlterarCategoriaPage() {
         return (
             <div className="sistema-loading-inline">
                 <i className="fas fa-spinner fa-spin"></i>
-                <span>Carregando categoria...</span>
+                <span>Carregando manual...</span>
             </div>
         );
     }
@@ -190,153 +273,207 @@ export default function AlterarCategoriaPage() {
         <div className="sistema-page">
 
             <div className="sistema-page-header">
+
                 <div>
                     <span className="sistema-page-kicker">
-                        Administração
+                        DOCUMENTAÇÃO
                     </span>
 
                     <h1>
-                        Alterar categoria
+                        Alterar manual
                     </h1>
 
                     <p>
-                        Atualize as informações da categoria.
+                        Atualize as informações deste manual.
                     </p>
                 </div>
 
                 <Link
-                    href="/sistema/categorias"
-                    className="btn-sistema btn-sistema-secondary"
+                    href={
+                        catIDOriginal
+                            ? `/sistema/manuais?categoria=${catIDOriginal}`
+                            : "/sistema/categorias"
+                    }
+                    className="btn-sistema-secondary"
                 >
                     <i className="fas fa-arrow-left"></i>
                     Voltar
                 </Link>
+
             </div>
 
             {erro && (
                 <div className="sistema-alert sistema-alert-error">
-                    <i className="fas fa-exclamation-circle"></i>
-                    <span>{erro}</span>
+
+                    <i className="fas fa-triangle-exclamation"></i>
+
+                    <span>
+                        Manual não encontrado.
+                    </span>
+
                 </div>
             )}
 
-            {sucesso && (
-                <div className="sistema-alert sistema-alert-success">
-                    <i className="fas fa-check-circle"></i>
-                    <span>{sucesso}</span>
-                </div>
-            )}
+            {!erro && (
+                <form
+                    className="sistema-form-card"
+                    onSubmit={salvar}
+                >
 
-            <form
-                className="cadastro-form"
-                onSubmit={salvar}
-            >
+                    <div className="sistema-form-row">
 
-                <div className="cadastro-card">
+                        <div className="sistema-form-group">
 
-                    <div className="cadastro-card-header">
-                        <div className="cadastro-card-icon">
-                            <i className="fas fa-folder"></i>
-                        </div>
-
-                        <div>
-                            <h2>
-                                Dados da categoria
-                            </h2>
-
-                            <p>
-                                Preencha as informações abaixo.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="cadastro-card-body">
-
-                        <div className="cadastro-form-group">
-                            <label htmlFor="catNome">
-                                Nome da categoria
-                                <span>*</span>
+                            <label htmlFor="manNome">
+                                Nome do manual
                             </label>
 
                             <input
-                                id="catNome"
+                                id="manNome"
                                 type="text"
-                                value={catNome}
+                                maxLength={150}
+                                value={formulario.manNome}
                                 onChange={(e) =>
-                                    setCatNome(e.target.value)
+                                    alterarCampo(
+                                        "manNome",
+                                        e.target.value
+                                    )
                                 }
-                                placeholder="Ex.: Aviário"
-                                maxLength={200}
                                 disabled={salvando}
                             />
+
                         </div>
 
-                        <div className="cadastro-form-group">
-                            <label htmlFor="catDescricao">
-                                Descrição
+                        <div className="sistema-form-group">
+
+                            <label htmlFor="manVoltagem">
+                                Voltagem / tipo
                             </label>
 
-                            <textarea
-                                id="catDescricao"
-                                value={catDescricao}
+                            <select
+                                id="manVoltagem"
+                                value={formulario.manVoltagem}
                                 onChange={(e) =>
-                                    setCatDescricao(e.target.value)
+                                    alterarCampo(
+                                        "manVoltagem",
+                                        e.target.value
+                                    )
                                 }
-                                placeholder="Descreva a categoria..."
-                                rows={5}
                                 disabled={salvando}
-                            />
-                        </div>
+                            >
+                                {VOLTAGENS.map((voltagem) => (
+                                    <option
+                                        key={voltagem}
+                                        value={voltagem}
+                                    >
+                                        {voltagem}
+                                    </option>
+                                ))}
+                            </select>
 
-                        <div className="cadastro-form-group">
-                            <label>
-                                Status
-                            </label>
-
-                            <div className="cadastro-switch">
-
-                                <label className="cadastro-switch-label">
-
-                                    <input
-                                        type="checkbox"
-                                        checked={catAtivo}
-                                        onChange={(e) =>
-                                            setCatAtivo(
-                                                e.target.checked
-                                            )
-                                        }
-                                        disabled={salvando}
-                                    />
-
-                                    <span className="cadastro-switch-slider"></span>
-
-                                    <span>
-                                        {catAtivo
-                                            ? "Categoria ativa"
-                                            : "Categoria inativa"}
-                                    </span>
-
-                                </label>
-
-                            </div>
                         </div>
 
                     </div>
 
-                    <div className="cadastro-card-footer">
+                    <div className="sistema-form-row">
 
-                        <Link
-                            href="/sistema/categorias"
-                            className="btn-sistema btn-sistema-secondary"
-                        >
-                            Cancelar
-                        </Link>
+                        <div className="sistema-form-group">
+
+                            <label htmlFor="catID">
+                                Categoria
+                            </label>
+
+                            <select
+                                id="catID"
+                                value={formulario.catID}
+                                onChange={(e) =>
+                                    alterarCampo(
+                                        "catID",
+                                        e.target.value
+                                    )
+                                }
+                                disabled={salvando}
+                            >
+
+                                <option value="">
+                                    Selecione uma categoria
+                                </option>
+
+                                {categorias.map((cat) => (
+                                    <option
+                                        key={cat.catID}
+                                        value={cat.catID}
+                                    >
+                                        {cat.catNome}
+                                    </option>
+                                ))}
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                    <div className="sistema-form-row">
+
+                        <div className="sistema-form-group">
+
+                            <label htmlFor="manChaveR2">
+                                Chave do arquivo no armazenamento
+                            </label>
+
+                            <input
+                                id="manChaveR2"
+                                type="text"
+                                value={formulario.manChaveR2}
+                                onChange={(e) =>
+                                    alterarCampo(
+                                        "manChaveR2",
+                                        e.target.value
+                                    )
+                                }
+                                disabled={salvando}
+                            />
+
+                            <p className="sistema-form-hint">
+                                Caminho completo do arquivo
+                                dentro do bucket, incluindo
+                                a extensão .pdf.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div className="sistema-form-check">
+
+                        <input
+                            id="manAtivo"
+                            type="checkbox"
+                            checked={formulario.manAtivo}
+                            onChange={(e) =>
+                                alterarCampo(
+                                    "manAtivo",
+                                    e.target.checked
+                                )
+                            }
+                            disabled={salvando}
+                        />
+
+                        <label htmlFor="manAtivo">
+                            Manual ativo (visível para os clientes)
+                        </label>
+
+                    </div>
+
+                    <div className="sistema-form-actions">
 
                         <button
                             type="submit"
-                            className="btn-sistema btn-sistema-primary"
-                            disabled={salvando}
+                            className="btn-sistema"
+                            disabled={salvando || excluindo}
                         >
+
                             {salvando ? (
                                 <>
                                     <i className="fas fa-spinner fa-spin"></i>
@@ -344,17 +481,38 @@ export default function AlterarCategoriaPage() {
                                 </>
                             ) : (
                                 <>
-                                    <i className="fas fa-save"></i>
+                                    <i className="fas fa-check"></i>
                                     Salvar alterações
                                 </>
                             )}
+
+                        </button>
+
+                        <button
+                            type="button"
+                            className="btn-sistema-secondary btn-sistema-danger"
+                            onClick={excluir}
+                            disabled={salvando || excluindo}
+                        >
+
+                            {excluindo ? (
+                                <>
+                                    <i className="fas fa-spinner fa-spin"></i>
+                                    Excluindo...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="fas fa-trash"></i>
+                                    Excluir manual
+                                </>
+                            )}
+
                         </button>
 
                     </div>
 
-                </div>
-
-            </form>
+                </form>
+            )}
 
         </div>
     );
