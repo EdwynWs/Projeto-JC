@@ -162,6 +162,36 @@ export default class UsuarioController {
         }
     }
 
+    async ativar(req, res) {
+
+        try {
+
+            const id = req.params.id;
+
+            const usuario = await this.#repoUsuario.buscarPorId(id);
+
+            if (!usuario) {
+                return res.status(404).json({
+                    msg: "Usuário não encontrado."
+                });
+            }
+
+            await this.#repoUsuario.ativar(id);
+
+            return res.status(200).json({
+                msg: "Usuário ativado com sucesso."
+            });
+
+        } catch (error) {
+
+            console.error("Erro ao ativar usuário:", error);
+
+            return res.status(500).json({
+                msg: "Erro ao ativar usuário."
+            });
+        }
+    }
+
     async cadastroUsuario(req, res) {
 
      try {

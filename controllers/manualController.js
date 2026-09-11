@@ -14,64 +14,103 @@ export default class manualController {
     }
 
 
-    async cadastrar(req, res){
+    async cadastrar(req, res) {
+
         try {
-            let usuID = req.usuario.usu_id;
 
-            let {manNome, manVoltagem, catID, manChaveR2} = req.body;
+            const usuID = req.usuario.usu_id;
 
-            let manAtivo = true;
-            let manDataCadastro = new Date();
+            const {
+                manNome,
+                manVoltagem,
+                catID
+            } = req.body;
 
-            if(!manNome){
+            if (!manNome) {
                 return res.status(400).json({
                     msg: "O nome do manual é obrigatório"
                 });
             }
 
-            if (!manVoltagem){
+            if (!manVoltagem) {
                 return res.status(400).json({
                     msg: "A voltagem do manual é obrigatória"
                 });
             }
 
-            if (!catID){
+            if (!catID) {
                 return res.status(400).json({
                     msg: "A categoria do manual é obrigatória"
                 });
             }
 
-            if (!manChaveR2){
+            if (!req.file) {
                 return res.status(400).json({
-                    msg: "A chave do arquivo no R2 é obrigatória"
+                    msg: "O arquivo PDF é obrigatório"
                 });
             }
 
-            let manual = new manualEntity(null, manNome, manVoltagem, catID, usuID, manChaveR2, manAtivo, manDataCadastro);
+            const nomeOriginal =
+                req.file.originalname;
 
-            if (!manual.validar()){
+            const nomeSeguro =
+                nomeOriginal
+                    .replace(/\s+/g, "-")
+                    .replace(/[^a-zA-Z0-9._-]/g, "");
+
+            const chaveR2 =
+                `manuais/${Date.now()}-${nomeSeguro}`;
+
+            await r2Service.enviarArquivo(
+                chaveR2,
+                req.file
+            );
+
+            const manual = new manualEntity(
+                null,
+                manNome,
+                manVoltagem,
+                catID,
+                usuID,
+                chaveR2,
+                true,
+                new Date()
+            );
+
+            if (!manual.validar()) {
+
+                await r2Service.excluirArquivo(
+                    chaveR2
+                );
+
                 return res.status(400).json({
                     msg: "Parâmetros inválidos"
                 });
             }
 
-            await this.#repoManual.cadastrar(manual);
+            await this.#repoManual.cadastrar(
+                manual
+            );
 
             return res.status(201).json({
                 msg: "Manual cadastrado com sucesso",
-                manual: manual
+                manual
             });
 
-        }
-        catch(error){
-            console.error(error);
+        } catch (error) {
+
+            console.error(
+                "Erro ao cadastrar manual:",
+                error
+            );
+
             return res.status(500).json({
                 msg: "Erro ao cadastrar manual"
             });
         }
     }
 
-
+    
     async listar(req, res) {
 
         try {
@@ -117,31 +156,57 @@ export default class manualController {
     }
 
 
-    async excluir(req, res){
-        try {
-            let {id} = req.params;
+    async excluir(req, res) {
 
-            if (!id){
+        try {
+            
+            const { id } = req.params;
+            
+            if (!id) {
                 return res.status(400).json({
                     msg: "ID do manual não informado"
                 });
             }
-
-            let result = await this.#repoManual.excluir(id);
-
-            if (result){
-                return res.status(200).json({
-                    msg: "Manual excluído com sucesso"
+            
+            const manual =
+                await this.#repoManual.buscarPorId(id);
+            
+            if (!manual) {
+                return res.status(404).json({
+                    msg: "Manual não encontrado"
                 });
             }
-
-            return res.status(404).json({
-                msg: "Manual não encontrado"
+            
+            // Primeiro remove o arquivo do R2
+            if (manual.manChaveR2) {
+                
+                await r2Service.excluirArquivo(
+                    manual.manChaveR2
+                );
+            }
+            
+            // Depois remove o registro do banco
+            const resultado =
+                await this.#repoManual.excluir(id);
+            
+            if (!resultado) {
+                
+                return res.status(404).json({
+                    msg: "Manual não encontrado"
+                });
+            }
+            
+            return res.status(200).json({
+                msg: "Manual excluído com sucesso"
             });
-
-        } 
-        catch(error){
-            console.error(error);
+            
+        } catch (error) {
+            
+            console.error(
+                "Erro ao excluir manual:",
+                error
+            );
+            
             return res.status(500).json({
                 msg: "Erro ao excluir manual"
             });

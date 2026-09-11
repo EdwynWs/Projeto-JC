@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useUsuario } from "../../context/userContext";
 
 const API_URL =
     process.env.NEXT_PUBLIC_API_URL ||
@@ -30,7 +31,7 @@ const TENSOES = [
 
 export default function ManuaisPage() {
 
-    const [abrindoManual, setAbrindoManual] = useState(null);
+    const [excluindoManual, setExcluindoManual] = useState(null);
     const router = useRouter();
     const searchParams = useSearchParams();
     const categoriaId = searchParams.get("categoria");
@@ -40,6 +41,8 @@ export default function ManuaisPage() {
     const [busca, setBusca] = useState("");
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState(false);
+    const { ehAdmin } = useUsuario();
+    const [abrindoManual, setAbrindoManual] = useState(null);
 
     useEffect(() => {
 
@@ -108,6 +111,66 @@ export default function ManuaisPage() {
                 setCarregando(false);
             }
         }
+
+        async function excluirManual(manual) {
+
+    const confirmar = window.confirm(
+        `Tem certeza que deseja excluir o manual "${manual.manNome}"?\n\n` +
+        "O PDF também será excluído do Cloudflare R2."
+    );
+
+    if (!confirmar) {
+        return;
+    }
+
+    try {
+
+        setExcluindoManual(manual.manID);
+
+        const response = await fetch(
+            `${API_URL}/manual/excluir/${manual.manID}`,
+            {
+                method: "DELETE",
+                credentials: "include"
+            }
+        );
+
+        const dados =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                dados.msg ||
+                "Não foi possível excluir o manual."
+            );
+        }
+
+        setManuais((lista) =>
+            lista.filter(
+                (item) =>
+                    Number(item.manID) !==
+                    Number(manual.manID)
+            )
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao excluir manual:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Erro ao excluir manual."
+        );
+
+    } finally {
+
+        setExcluindoManual(null);
+    }
+}
 
         carregarDados();
 
@@ -540,9 +603,9 @@ export default function ManuaisPage() {
                                             <ManualCard
                                                 key={manual.manID}
                                                 manual={manual}
-                                                onOpen={
-                                                    abrirManual
-                                                }
+                                                onOpen={abrirManual}
+                                                onDelete={excluirManual}
+                                                isAdmin={ehAdmin()}
                                             />
 
                                         )
@@ -604,23 +667,40 @@ function ManualCard({
             </div>
 
 
-            <button
-            className="manual-card-btn"
-            onClick={() => abrirManual(manual)}
-            disabled={abrindoManual === manual.manID}
+            <div className="manual-card-actions">
+
+    <button
+        className="manual-card-btn"
+        onClick={() => onOpen(manual)}
+    >
+        <i className="fas fa-file-pdf"></i>
+        Abrir PDF
+    </button>
+
+    {isAdmin && (
+        <>
+            <Link
+                href={`/sistema/manuais/alterar?id=${manual.manID}`}
+                className="manual-card-action-edit"
             >
-            {abrindoManual === manual.manID ? (
-                <>
-                    <i className="fas fa-spinner fa-spin"></i>
-                    Abrindo...
-                </>
-            ) : (
-                <>
-                    <i className="fas fa-file-pdf"></i>
-                    Abrir PDF
-                </>
-            )}
-        </button>
+                <i className="fas fa-edit"></i>
+                Editar
+            </Link>
+
+            <button
+                type="button"
+                className="manual-card-action-delete"
+                onClick={() =>
+                    onDelete(manual)
+                }
+            >
+                <i className="fas fa-trash"></i>
+                Excluir
+            </button>
+        </>
+    )}
+
+        </div>
 
         </div>
 

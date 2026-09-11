@@ -2,7 +2,7 @@ import express from "express";
 import multer from "multer";
 import ProjetoController from "../controllers/projetoController.js";
 import auth from "../middlewares/auth.js";
-import { somenteAdmin } from "../middlewares/somenteAdmin.js";
+import somenteAdmin from "../middlewares/somenteAdmin.js";
 
 const router = express.Router();
 const controller = new ProjetoController();

@@ -97,4 +97,14 @@ export default class UsuarioRepository extends Repository{
 
         return result;
     }
+
+    
+    async ativar(id) {
+        let sql = "update usuario set usu_ativo = 1 where usu_id = ?";
+        let valores = [1, id];
+
+        let resultado = await this.banco.ExecutaComandoNonQuery(sql, valores);
+
+        return resultado;
+    }
 }
