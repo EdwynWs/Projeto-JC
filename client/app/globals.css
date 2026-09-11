@@ -5780,3 +5780,226 @@ textarea:focus-visible {
     }
 
 }
+
+/* =========================================================
+   BOTÕES PADRÃO DO SISTEMA - JCORTIÇA
+   ========================================================= */
+
+.btn-sistema {
+    min-height: 42px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 0 16px;
+
+    border: 1px solid #1f3c88;
+    border-radius: 10px;
+
+    background: #1f3c88;
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.btn-sistema i {
+    font-size: 12px;
+}
+
+.btn-sistema:hover {
+    background: #14275e;
+    border-color: #14275e;
+    color: #ffffff;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 4px 10px rgba(31, 60, 136, 0.18);
+}
+
+.btn-sistema:active {
+    transform: translateY(0);
+
+    box-shadow: none;
+}
+
+.btn-sistema:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   BOTÃO PRINCIPAL
+   ========================================================= */
+
+.btn-sistema-primary {
+    background: #1f3c88;
+    border-color: #1f3c88;
+    color: #ffffff;
+}
+
+.btn-sistema-primary:hover {
+    background: #14275e;
+    border-color: #14275e;
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   BOTÃO SECUNDÁRIO
+   ========================================================= */
+
+.btn-sistema-secondary {
+    min-height: 42px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 0 16px;
+
+    border: 1px solid #d9e1ea;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #4a5568;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.btn-sistema-secondary:hover {
+    background: #f7f9fc;
+    border-color: #c5d0dd;
+    color: #243247;
+
+    transform: translateY(-1px);
+}
+
+.btn-sistema-secondary:active {
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   BOTÃO DE PERIGO
+   ========================================================= */
+
+.btn-sistema-danger {
+    min-height: 42px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 0 16px;
+
+    border: 1px solid #fecdca;
+    border-radius: 10px;
+
+    background: #fef3f2;
+    color: #d92d20;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.btn-sistema-danger:hover {
+    background: #d92d20;
+    border-color: #d92d20;
+    color: #ffffff;
+
+    transform: translateY(-1px);
+}
+
+.btn-sistema-danger:active {
+    transform: translateY(0);
+}
+
+.btn-sistema-danger:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+/* =========================================================
+   BOTÃO DE VOLTAR / LINK SECUNDÁRIO
+   ========================================================= */
+
+.btn-sistema-back {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 0;
+
+    border: 0;
+
+    background: transparent;
+    color: #667085;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.btn-sistema-back:hover {
+    color: #1f3c88;
+
+    transform: translateX(-2px);
+}

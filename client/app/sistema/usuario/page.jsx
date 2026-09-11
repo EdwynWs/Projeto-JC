@@ -200,14 +200,11 @@ export default function HomeUsuario() {
 
 
                 <Link
-                    className="btn btn-primary"
                     href="/sistema/usuario/cadastrar"
+                    className="btn-sistema"
                 >
-
-                    <i className="fas fa-plus mr-2"></i>
-
-                    Cadastrar Usuário
-
+                    <i className="fas fa-plus"></i>
+                    Cadastrar usuário
                 </Link>
 
             </div>
@@ -471,16 +468,15 @@ export default function HomeUsuario() {
                             </p>
 
 
-                            <Link
-                                href="/sistema/usuario/cadastrar"
-                                className="btn btn-primary mt-3"
-                            >
+                                <Link
+                                    href="/sistema/usuario/cadastrar"
+                                    className="btn-sistema"
+                                >
+                                    <i className="fas fa-plus"></i>
+                                    Cadastrar usuário
+                                </Link>
 
-                                Cadastrar Usuário
-
-                            </Link>
-
-                        </div>
+                            </div>
 
                     )}
 
