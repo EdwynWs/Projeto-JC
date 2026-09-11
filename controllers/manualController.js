@@ -310,7 +310,7 @@ export default class manualController {
 
             }
 
-            const manual = await this.repository.buscarPorId(id);
+            const manual = await this.#repoManual.buscarPorId(id);
 
             if (!manual) {
 
@@ -339,15 +339,19 @@ export default class manualController {
 
             }
 
-            const url = await r2Service.gerarUrlArquivo(
-                manual.manChaveR2,
-                manual.manNome
-            );
+            const baixar = req.query.download === "1";
+
+            const url =
+                 await r2Service.gerarUrlArquivo(
+                     manual.manChaveR2,
+                     manual.manNome,
+                     baixar
+                 );
 
             return res.status(200).json({
                 sucesso: true,
                 url: url,
-                expiraEm: Number(process.env.R2_URL_EXPIRATION) || 900
+                expiraEm: Number(process.env.B2_URL_EXPIRATION) || 900
             });
 
         } catch (error) {

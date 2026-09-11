@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
 import { useUsuario } from "../../../context/userContext";
 
 const API_URL =
@@ -40,14 +41,17 @@ export default function CadastrarManualPage() {
     const [formulario, setFormulario] = useState({
         manNome: "",
         manVoltagem: "",
-        catID: "",
-        manChaveR2: ""
+        catID: ""
     });
+
+    const [arquivo, setArquivo] = useState(null);
 
     const [carregando, setCarregando] = useState(true);
     const [salvando, setSalvando] = useState(false);
+
     const [erro, setErro] = useState("");
     const [sucesso, setSucesso] = useState("");
+
 
     useEffect(() => {
 
@@ -62,6 +66,7 @@ export default function CadastrarManualPage() {
 
     }, [usuario]);
 
+
     async function carregarCategorias() {
 
         try {
@@ -72,7 +77,6 @@ export default function CadastrarManualPage() {
             const response = await fetch(
                 `${API_URL}/categoria/listar`,
                 {
-                    method: "GET",
                     credentials: "include"
                 }
             );
@@ -85,12 +89,13 @@ export default function CadastrarManualPage() {
 
             const dados = await response.json();
 
-            const categoriasAtivas = Array.isArray(dados)
-                ? dados.filter(
-                    categoria =>
-                        Number(categoria.catAtivo) === 1
-                )
-                : [];
+            const categoriasAtivas =
+                Array.isArray(dados)
+                    ? dados.filter(
+                        categoria =>
+                            Number(categoria.catAtivo) === 1
+                    )
+                    : [];
 
             setCategorias(categoriasAtivas);
 
@@ -107,7 +112,9 @@ export default function CadastrarManualPage() {
             setCarregando(false);
 
         }
+
     }
+
 
     function alterarCampo(event) {
 
@@ -123,7 +130,58 @@ export default function CadastrarManualPage() {
 
         setErro("");
         setSucesso("");
+
     }
+
+
+    function selecionarArquivo(event) {
+
+        const arquivoSelecionado =
+            event.target.files?.[0];
+
+        if (!arquivoSelecionado) {
+            setArquivo(null);
+            return;
+        }
+
+        if (
+            arquivoSelecionado.type !==
+            "application/pdf"
+        ) {
+
+            setErro(
+                "Apenas arquivos PDF são permitidos."
+            );
+
+            event.target.value = "";
+            setArquivo(null);
+
+            return;
+
+        }
+
+        if (
+            arquivoSelecionado.size >
+            20 * 1024 * 1024
+        ) {
+
+            setErro(
+                "O arquivo deve ter no máximo 20 MB."
+            );
+
+            event.target.value = "";
+            setArquivo(null);
+
+            return;
+
+        }
+
+        setArquivo(arquivoSelecionado);
+        setErro("");
+        setSucesso("");
+
+    }
+
 
     async function cadastrarManual(event) {
 
@@ -133,57 +191,87 @@ export default function CadastrarManualPage() {
         setSucesso("");
 
         if (!formulario.manNome.trim()) {
-            setErro("Informe o nome do manual.");
+
+            setErro(
+                "Informe o nome do manual."
+            );
+
             return;
+
         }
 
         if (!formulario.manVoltagem) {
-            setErro("Selecione a tensão do manual.");
+
+            setErro(
+                "Selecione a tensão do manual."
+            );
+
             return;
+
         }
 
         if (!formulario.catID) {
-            setErro("Selecione uma categoria.");
+
+            setErro(
+                "Selecione uma categoria."
+            );
+
             return;
+
         }
 
-        if (!formulario.manChaveR2.trim()) {
-            setErro("Informe a chave do arquivo no R2.");
+        if (!arquivo) {
+
+            setErro(
+                "Selecione o arquivo PDF do manual."
+            );
+
             return;
+
         }
+
 
         try {
 
             setSalvando(true);
 
+            const dadosFormulario =
+                new FormData();
+
+            dadosFormulario.append(
+                "manNome",
+                formulario.manNome.trim()
+            );
+
+            dadosFormulario.append(
+                "manVoltagem",
+                formulario.manVoltagem
+            );
+
+            dadosFormulario.append(
+                "catID",
+                Number(formulario.catID)
+            );
+
+            dadosFormulario.append(
+                "arquivo",
+                arquivo
+            );
+
+
             const response = await fetch(
                 `${API_URL}/manual/cadastrar`,
                 {
                     method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
                     credentials: "include",
-
-                    body: JSON.stringify({
-                        manNome:
-                            formulario.manNome.trim(),
-
-                        manVoltagem:
-                            formulario.manVoltagem,
-
-                        catID:
-                            Number(formulario.catID),
-
-                        manChaveR2:
-                            formulario.manChaveR2.trim()
-                    })
+                    body: dadosFormulario
                 }
             );
 
-            const dados = await response.json();
+
+            const dados =
+                await response.json();
+
 
             if (!response.ok) {
 
@@ -191,22 +279,27 @@ export default function CadastrarManualPage() {
                     dados.msg ||
                     "Não foi possível cadastrar o manual."
                 );
+
             }
+
 
             setSucesso(
                 "Manual cadastrado com sucesso!"
             );
 
-            setFormulario({
-                manNome: "",
-                manVoltagem: "",
-                catID: "",
-                manChaveR2: ""
-            });
+
+            const categoriaSelecionada =
+                formulario.catID;
+
 
             setTimeout(() => {
-                router.push("/sistema/manuais");
-            }, 1000);
+
+                router.push(
+                    `/sistema/manuais?categoria=${categoriaSelecionada}`
+                );
+
+            }, 700);
+
 
         } catch (error) {
 
@@ -222,17 +315,26 @@ export default function CadastrarManualPage() {
             setSalvando(false);
 
         }
+
     }
+
 
     if (!usuario || carregando) {
 
         return (
             <div className="sistema-loading-inline">
+
                 <i className="fas fa-spinner fa-spin"></i>
-                <span>Carregando...</span>
+
+                <span>
+                    Carregando...
+                </span>
+
             </div>
         );
+
     }
+
 
     if (!ehAdmin()) {
 
@@ -243,7 +345,9 @@ export default function CadastrarManualPage() {
                     <i className="fas fa-lock"></i>
                 </div>
 
-                <h2>Acesso restrito</h2>
+                <h2>
+                    Acesso restrito
+                </h2>
 
                 <p>
                     Apenas administradores podem
@@ -251,19 +355,20 @@ export default function CadastrarManualPage() {
                 </p>
 
                 <Link
-                    href="/sistema/manuais"
+                    href="/sistema/home"
                     className="btn-sistema"
                 >
                     <i className="fas fa-arrow-left"></i>
-                    Voltar aos manuais
+                    Voltar
                 </Link>
 
             </div>
         );
+
     }
 
-    return (
 
+    return (
         <div className="cadastro-page">
 
             <div className="cadastro-header">
@@ -295,19 +400,36 @@ export default function CadastrarManualPage() {
 
             </div>
 
+
             {erro && (
+
                 <div className="cadastro-alert cadastro-alert-error">
+
                     <i className="fas fa-circle-exclamation"></i>
-                    <span>{erro}</span>
+
+                    <span>
+                        {erro}
+                    </span>
+
                 </div>
+
             )}
 
+
             {sucesso && (
+
                 <div className="cadastro-alert cadastro-alert-success">
+
                     <i className="fas fa-circle-check"></i>
-                    <span>{sucesso}</span>
+
+                    <span>
+                        {sucesso}
+                    </span>
+
                 </div>
+
             )}
+
 
             <form
                 className="cadastro-card"
@@ -323,14 +445,19 @@ export default function CadastrarManualPage() {
                         </div>
 
                         <div>
-                            <h2>Informações do manual</h2>
+
+                            <h2>
+                                Informações do manual
+                            </h2>
+
                             <p>
-                                Preencha os dados principais
-                                do documento.
+                                Preencha os dados do documento.
                             </p>
+
                         </div>
 
                     </div>
+
 
                     <div className="cadastro-grid">
 
@@ -353,12 +480,17 @@ export default function CadastrarManualPage() {
 
                         </div>
 
+
                         <div className="cadastro-field">
 
                             <label htmlFor="catID">
+
                                 Categoria
+
                                 <span>*</span>
+
                             </label>
+
 
                             <div className="cadastro-select-wrapper">
 
@@ -375,12 +507,14 @@ export default function CadastrarManualPage() {
 
                                     {categorias.map(
                                         categoria => (
+
                                             <option
                                                 key={categoria.catID}
                                                 value={categoria.catID}
                                             >
                                                 {categoria.catNome}
                                             </option>
+
                                         )
                                     )}
 
@@ -391,6 +525,7 @@ export default function CadastrarManualPage() {
                             </div>
 
                         </div>
+
 
                         <div className="cadastro-field">
 
@@ -408,7 +543,8 @@ export default function CadastrarManualPage() {
                                             key={voltagem.id}
                                             className={
                                                 `voltagem-option ${
-                                                    formulario.manVoltagem === voltagem.id
+                                                    formulario.manVoltagem ===
+                                                    voltagem.id
                                                         ? "selected"
                                                         : ""
                                                 }`
@@ -429,11 +565,13 @@ export default function CadastrarManualPage() {
                                             />
 
                                             <span className="voltagem-option-icon">
+
                                                 <i
                                                     className={
                                                         `fas ${voltagem.icone}`
                                                     }
                                                 ></i>
+
                                             </span>
 
                                             <span>
@@ -453,62 +591,67 @@ export default function CadastrarManualPage() {
 
                 </div>
 
+
                 <div className="cadastro-section">
 
                     <div className="cadastro-section-title">
 
                         <div className="cadastro-section-icon">
-                            <i className="fas fa-cloud"></i>
+                            <i className="fas fa-file-pdf"></i>
                         </div>
 
                         <div>
-                            <h2>Arquivo</h2>
+
+                            <h2>
+                                Arquivo PDF
+                            </h2>
+
                             <p>
-                                Informe a localização do arquivo
-                                armazenado no Cloudflare R2.
+                                Selecione o manual que será
+                                armazenado no Backblaze.
                             </p>
+
                         </div>
 
                     </div>
 
-                    <div className="cadastro-field">
 
-                        <label htmlFor="manChaveR2">
-                            Chave do arquivo no R2
+                    <div className="cadastro-field cadastro-field-full">
+
+                        <label htmlFor="arquivo">
+                            Arquivo PDF
                             <span>*</span>
                         </label>
 
                         <input
-                            id="manChaveR2"
-                            name="manChaveR2"
-                            type="text"
-                            value={formulario.manChaveR2}
-                            onChange={alterarCampo}
-                            placeholder="Ex.: manuais/aviario/220V/manual.pdf"
+                            id="arquivo"
+                            type="file"
+                            accept="application/pdf,.pdf"
+                            onChange={selecionarArquivo}
                         />
 
                         <small>
-                            Essa informação é utilizada
-                            pelo sistema para localizar o
-                            PDF no Cloudflare R2.
+                            PDF de até 20 MB.
                         </small>
 
-                    </div>
+                        {arquivo && (
 
-                    <div className="cadastro-info">
+                            <div className="arquivo-selecionado">
 
-                        <i className="fas fa-circle-info"></i>
+                                <i className="fas fa-file-pdf"></i>
 
-                        <span>
-                            O arquivo não é armazenado no
-                            banco de dados. O MySQL guarda
-                            apenas a chave de acesso ao
-                            arquivo no R2.
-                        </span>
+                                <span>
+                                    {arquivo.name}
+                                </span>
+
+                            </div>
+
+                        )}
 
                     </div>
 
                 </div>
+
 
                 <div className="cadastro-actions">
 
@@ -526,15 +669,19 @@ export default function CadastrarManualPage() {
                     >
 
                         {salvando ? (
+
                             <>
                                 <i className="fas fa-spinner fa-spin"></i>
                                 Cadastrando...
                             </>
+
                         ) : (
+
                             <>
-                                <i className="fas fa-plus"></i>
+                                <i className="fas fa-save"></i>
                                 Cadastrar manual
                             </>
+
                         )}
 
                     </button>
@@ -545,4 +692,5 @@ export default function CadastrarManualPage() {
 
         </div>
     );
+
 }

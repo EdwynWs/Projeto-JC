@@ -98,55 +98,42 @@ class R2Service {
     }
 
 
-    async gerarUrlArquivo(chave, nomeArquivo) {
+    async gerarUrlArquivo(chave, nomeArquivo, baixar = false) {
+        
+     this.verificarConfiguracao();
 
-        this.verificarConfiguracao();
+     if (!chave) {
+         throw new Error(
+             "Chave do arquivo B2 não informada."
+         );
+     }
 
+     const comando = new GetObjectCommand({
 
-        if (!chave) {
+         Bucket: process.env.B2_BUCKET_NAME,
 
-            throw new Error(
-                "Chave do arquivo B2 não informada."
-            );
+         Key: chave,
 
-        }
+         ResponseContentType: "application/pdf",
 
+         ResponseContentDisposition:
+             `${baixar ? "attachment" : "inline"}; filename="${nomeArquivo || "arquivo.pdf"}"`
 
-        const comando = new GetObjectCommand({
+     });
 
-            Bucket: process.env.B2_BUCKET_NAME,
+     const tempoExpiracao =
+         Number(process.env.B2_URL_EXPIRATION) || 900;
 
-            Key: chave,
+     const url = await getSignedUrl(
+         r2,
+         comando,
+         {
+             expiresIn: tempoExpiracao
+         }
+     );
 
-            ResponseContentType: "application/pdf",
-
-            ResponseContentDisposition:
-                `inline; filename="${nomeArquivo || "arquivo.pdf"}"`
-
-        });
-
-
-        const tempoExpiracao =
-            Number(process.env.B2_URL_EXPIRATION) || 900;
-
-
-        const url = await getSignedUrl(
-
-            r2,
-
-            comando,
-
-            {
-                expiresIn: tempoExpiracao
-            }
-
-        );
-
-
-        return url;
-
+     return url;
     }
-
 
     async excluirArquivo(chave) {
 

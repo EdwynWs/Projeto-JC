@@ -189,17 +189,19 @@ class ProjetoController {
                 });
             }
 
+            const baixar = req.query.download === "1";
+
             const url =
-                await r2Service.gerarUrlArquivo(
-                    projeto.proChaveR2,
-                    projeto.proNomeArquivo
-                );
+                 await r2Service.gerarUrlArquivo(
+                 projeto.proChaveR2,
+                 projeto.proNomeArquivo,
+                 baixar
+        );
 
             return res.status(200).json({
                 sucesso: true,
                 url,
-                expiraEm:
-                    Number(process.env.R2_URL_EXPIRATION) || 900
+                expiraEm: Number(process.env.B2_URL_EXPIRATION) || 900
             });
 
         } catch (error) {
