@@ -117,53 +117,66 @@ export default class UsuarioController {
     }
 
 
-    async inativarUsuario(req, res){
-        try{
-            let {id} = req.params;
+    async inativarUsuario(req, res) {
 
-            if (!id || isNaN(id)){
+        try {
+
+            const { id } = req.params;
+
+            if (!id || isNaN(id)) {
+
                 return res.status(400).json({
                     msg: "ID do usuário inválido"
                 });
+
             }
 
-            let usuario = await this.#repoUsuario.obter(id);
+            const usuario = await this.#repoUsuario.obter(id);
 
-            if (!usuario){
+            if (!usuario) {
+
                 return res.status(404).json({
                     msg: "Usuário não encontrado"
                 });
+
             }
 
-            if (Number(usuario.usuarioAtivo) !== 1) {
-              return res.status(403).json({
-                  msg: "Seu usuário está inativo. Entre em contato com o administrador."
-              });
+            if (Number(usuario.usuarioAtivo) === 0) {
+
+                return res.status(400).json({
+                    msg: "Usuário já está inativo"
+                });
+
             }
 
-            let resultado = await this.#repoUsuario.inativarUsuario(id);
+            const resultado =
+                await this.#repoUsuario.inativarUsuario(id);
 
-            if (!resultado){
+            if (!resultado) {
+
                 return res.status(400).json({
                     msg: "Não foi possível inativar o usuário"
                 });
+
             }
 
             return res.status(200).json({
                 msg: "Usuário inativado com sucesso"
             });
 
-        } 
-        catch(error){
-            console.error(error);
+        } catch (error) {
+
+            console.error("Erro ao inativar usuário:", error);
+
             return res.status(500).json({
                 msg: "Erro ao inativar usuário"
             });
+
         }
     }
 
     async ativar(req, res) {
-
+                        
         try {
 
             const id = req.params.id;
