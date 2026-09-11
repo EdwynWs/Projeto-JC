@@ -29,8 +29,11 @@ function AlterarManualConteudo() {
     const router = useRouter();
     const params = useSearchParams();
 
-    const { usuario, carregando: carregandoUsuario, ehAdmin } =
-        useUsuario();
+    const {
+        usuario,
+        carregando: carregandoUsuario,
+        ehAdmin
+    } = useUsuario();
 
     const manualId = params.get("id");
 
@@ -53,9 +56,13 @@ function AlterarManualConteudo() {
     const [erro, setErro] = useState(false);
 
     useEffect(() => {
-        if (carregandoUsuario) return;
+        if (carregandoUsuario) {
+            return;
+        }
 
-        if (!usuario) return;
+        if (!usuario) {
+            return;
+        }
 
         if (!ehAdmin()) {
             router.replace("/sistema/home");
@@ -69,32 +76,43 @@ function AlterarManualConteudo() {
         }
 
         carregar();
-    }, [manualId, usuario, carregandoUsuario]);
+    }, [
+        manualId,
+        usuario,
+        carregandoUsuario
+    ]);
 
     async function carregar() {
         try {
             setCarregando(true);
             setErro(false);
 
-            const [categoriasResp, manuaisResp] =
-                await Promise.all([
-                    ApiClient.get("categoria/listar"),
-                    ApiClient.get("manual/listar")
-                ]);
+            const [
+                categoriasResp,
+                manuaisResp
+            ] = await Promise.all([
+                ApiClient.get("categoria/listar"),
+                ApiClient.get("manual/listar")
+            ]);
 
-            const listaCategorias = Array.isArray(categoriasResp)
+            const listaCategorias = Array.isArray(
+                categoriasResp
+            )
                 ? categoriasResp
                 : [];
 
             setCategorias(listaCategorias);
 
-            const listaManuais = Array.isArray(manuaisResp)
+            const listaManuais = Array.isArray(
+                manuaisResp
+            )
                 ? manuaisResp
                 : [];
 
             const manual = listaManuais.find(
                 (item) =>
-                    Number(item.manID) === Number(manualId)
+                    Number(item.manID) ===
+                    Number(manualId)
             );
 
             if (!manual) {
@@ -104,14 +122,20 @@ function AlterarManualConteudo() {
 
             setFormulario({
                 manNome: manual.manNome || "",
+
                 manVoltagem:
-                    manual.manVoltagem || VOLTAGENS[0],
+                    manual.manVoltagem ||
+                    VOLTAGENS[0],
+
                 catID:
                     manual.catID !== null &&
                     manual.catID !== undefined
                         ? String(manual.catID)
                         : "",
-                manChaveR2: manual.manChaveR2 || "",
+
+                manChaveR2:
+                    manual.manChaveR2 || "",
+
                 manAtivo:
                     Number(manual.manAtivo) === 1 ||
                     manual.manAtivo === true
@@ -147,9 +171,15 @@ function AlterarManualConteudo() {
 
         setErro(false);
 
-        const manNome = formulario.manNome.trim();
-        const manVoltagem = formulario.manVoltagem;
-        const catID = formulario.catID;
+        const manNome =
+            formulario.manNome.trim();
+
+        const manVoltagem =
+            formulario.manVoltagem;
+
+        const catID =
+            formulario.catID;
+
         const manChaveR2 =
             formulario.manChaveR2.trim();
 
@@ -177,16 +207,18 @@ function AlterarManualConteudo() {
         try {
             setSalvando(true);
 
-            const resposta = await ApiClient.put(
-                `manual/modificar/${manualId}`,
-                {
-                    manNome,
-                    manVoltagem,
-                    catID: Number(catID),
-                    manChaveR2,
-                    manAtivo: formulario.manAtivo
-                }
-            );
+            const resposta =
+                await ApiClient.put(
+                    `manual/modificar/${manualId}`,
+                    {
+                        manNome,
+                        manVoltagem,
+                        catID: Number(catID),
+                        manChaveR2,
+                        manAtivo:
+                            formulario.manAtivo
+                    }
+                );
 
             if (resposta) {
                 toast.success(
@@ -225,9 +257,10 @@ function AlterarManualConteudo() {
         try {
             setExcluindo(true);
 
-            const resposta = await ApiClient.delete(
-                `manual/excluir/${manualId}`
-            );
+            const resposta =
+                await ApiClient.delete(
+                    `manual/excluir/${manualId}`
+                );
 
             if (resposta) {
                 toast.success(
@@ -256,11 +289,17 @@ function AlterarManualConteudo() {
         }
     }
 
-    if (carregandoUsuario || carregando) {
+    if (
+        carregandoUsuario ||
+        carregando
+    ) {
         return (
             <div className="sistema-loading-inline">
                 <i className="fas fa-spinner fa-spin"></i>
-                <span>Carregando manual...</span>
+
+                <span>
+                    Carregando manual...
+                </span>
             </div>
         );
     }
@@ -297,6 +336,7 @@ function AlterarManualConteudo() {
                     className="btn-sistema-secondary"
                 >
                     <i className="fas fa-arrow-left"></i>
+
                     Voltar
                 </Link>
 
@@ -332,14 +372,19 @@ function AlterarManualConteudo() {
                                 id="manNome"
                                 type="text"
                                 maxLength={150}
-                                value={formulario.manNome}
+                                value={
+                                    formulario.manNome
+                                }
                                 onChange={(e) =>
                                     alterarCampo(
                                         "manNome",
                                         e.target.value
                                     )
                                 }
-                                disabled={salvando}
+                                disabled={
+                                    salvando ||
+                                    excluindo
+                                }
                             />
 
                         </div>
@@ -352,23 +397,36 @@ function AlterarManualConteudo() {
 
                             <select
                                 id="manVoltagem"
-                                value={formulario.manVoltagem}
+                                value={
+                                    formulario.manVoltagem
+                                }
                                 onChange={(e) =>
                                     alterarCampo(
                                         "manVoltagem",
                                         e.target.value
                                     )
                                 }
-                                disabled={salvando}
+                                disabled={
+                                    salvando ||
+                                    excluindo
+                                }
                             >
-                                {VOLTAGENS.map((voltagem) => (
-                                    <option
-                                        key={voltagem}
-                                        value={voltagem}
-                                    >
-                                        {voltagem}
-                                    </option>
-                                ))}
+
+                                {VOLTAGENS.map(
+                                    (voltagem) => (
+                                        <option
+                                            key={
+                                                voltagem
+                                            }
+                                            value={
+                                                voltagem
+                                            }
+                                        >
+                                            {voltagem}
+                                        </option>
+                                    )
+                                )}
+
                             </select>
 
                         </div>
@@ -385,28 +443,41 @@ function AlterarManualConteudo() {
 
                             <select
                                 id="catID"
-                                value={formulario.catID}
+                                value={
+                                    formulario.catID
+                                }
                                 onChange={(e) =>
                                     alterarCampo(
                                         "catID",
                                         e.target.value
                                     )
                                 }
-                                disabled={salvando}
+                                disabled={
+                                    salvando ||
+                                    excluindo
+                                }
                             >
 
                                 <option value="">
                                     Selecione uma categoria
                                 </option>
 
-                                {categorias.map((cat) => (
-                                    <option
-                                        key={cat.catID}
-                                        value={cat.catID}
-                                    >
-                                        {cat.catNome}
-                                    </option>
-                                ))}
+                                {categorias.map(
+                                    (cat) => (
+                                        <option
+                                            key={
+                                                cat.catID
+                                            }
+                                            value={
+                                                cat.catID
+                                            }
+                                        >
+                                            {
+                                                cat.catNome
+                                            }
+                                        </option>
+                                    )
+                                )}
 
                             </select>
 
@@ -425,14 +496,19 @@ function AlterarManualConteudo() {
                             <input
                                 id="manChaveR2"
                                 type="text"
-                                value={formulario.manChaveR2}
+                                value={
+                                    formulario.manChaveR2
+                                }
                                 onChange={(e) =>
                                     alterarCampo(
                                         "manChaveR2",
                                         e.target.value
                                     )
                                 }
-                                disabled={salvando}
+                                disabled={
+                                    salvando ||
+                                    excluindo
+                                }
                             />
 
                             <p className="sistema-form-hint">
@@ -450,14 +526,19 @@ function AlterarManualConteudo() {
                         <input
                             id="manAtivo"
                             type="checkbox"
-                            checked={formulario.manAtivo}
+                            checked={
+                                formulario.manAtivo
+                            }
                             onChange={(e) =>
                                 alterarCampo(
                                     "manAtivo",
                                     e.target.checked
                                 )
                             }
-                            disabled={salvando}
+                            disabled={
+                                salvando ||
+                                excluindo
+                            }
                         />
 
                         <label htmlFor="manAtivo">
@@ -471,17 +552,22 @@ function AlterarManualConteudo() {
                         <button
                             type="submit"
                             className="btn-sistema"
-                            disabled={salvando || excluindo}
+                            disabled={
+                                salvando ||
+                                excluindo
+                            }
                         >
 
                             {salvando ? (
                                 <>
                                     <i className="fas fa-spinner fa-spin"></i>
+
                                     Salvando...
                                 </>
                             ) : (
                                 <>
                                     <i className="fas fa-check"></i>
+
                                     Salvar alterações
                                 </>
                             )}
@@ -492,17 +578,22 @@ function AlterarManualConteudo() {
                             type="button"
                             className="btn-sistema-secondary btn-sistema-danger"
                             onClick={excluir}
-                            disabled={salvando || excluindo}
+                            disabled={
+                                salvando ||
+                                excluindo
+                            }
                         >
 
                             {excluindo ? (
                                 <>
                                     <i className="fas fa-spinner fa-spin"></i>
+
                                     Excluindo...
                                 </>
                             ) : (
                                 <>
                                     <i className="fas fa-trash"></i>
+
                                     Excluir manual
                                 </>
                             )}

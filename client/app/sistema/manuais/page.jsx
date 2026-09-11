@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-
 import { useUsuario } from "../../context/userContext";
 
 const API_URL =
@@ -29,17 +28,19 @@ const TENSOES = [
 ];
 
 export default function ManuaisPage() {
+
     const router = useRouter();
     const searchParams = useSearchParams();
 
     const categoriaId = searchParams.get("categoria");
 
+    const [categorias, setCategorias] = useState([]);
     const [categoria, setCategoria] = useState(null);
     const [manuais, setManuais] = useState([]);
 
+    const [buscaCategoria, setBuscaCategoria] = useState("");
     const [tensaoSelecionada, setTensaoSelecionada] =
         useState("TODAS");
-
     const [busca, setBusca] = useState("");
 
     const [carregando, setCarregando] =
@@ -58,21 +59,16 @@ export default function ManuaisPage() {
 
     /*
     ============================================================
-    CARREGAR CATEGORIA E MANUAIS
+    CARREGAR CATEGORIAS E MANUAIS
     ============================================================
     */
 
     useEffect(() => {
-        if (!categoriaId) {
-            setCategoria(null);
-            setManuais([]);
-            setCarregando(false);
-            setErro(false);
-            return;
-        }
 
         async function carregarDados() {
+
             try {
+
                 setCarregando(true);
                 setErro(false);
 
@@ -97,17 +93,50 @@ export default function ManuaisPage() {
                     );
                 }
 
-                const categorias =
+                const dadosCategorias =
                     await categoriasResponse.json();
 
+                const listaCategorias =
+                    Array.isArray(dadosCategorias)
+                        ? dadosCategorias.filter(
+                            (item) =>
+                                Number(
+                                    item.catAtivo ??
+                                    item.cat_ativo ??
+                                    1
+                                ) === 1
+                        )
+                        : [];
+
+                setCategorias(listaCategorias);
+
+                /*
+                --------------------------------------------------
+                SE NÃO HOUVER CATEGORIA SELECIONADA
+                MOSTRA AS CATEGORIAS
+                --------------------------------------------------
+                */
+
+                if (!categoriaId) {
+
+                    setCategoria(null);
+                    setManuais([]);
+
+                    return;
+                }
+
+                /*
+                --------------------------------------------------
+                ENCONTRAR CATEGORIA SELECIONADA
+                --------------------------------------------------
+                */
+
                 const categoriaEncontrada =
-                    Array.isArray(categorias)
-                        ? categorias.find(
-                              (item) =>
-                                  Number(item.catID) ===
-                                  Number(categoriaId)
-                          )
-                        : null;
+                    listaCategorias.find(
+                        (item) =>
+                            Number(item.catID) ===
+                            Number(categoriaId)
+                    );
 
                 setCategoria(
                     categoriaEncontrada || null
@@ -134,28 +163,69 @@ export default function ManuaisPage() {
                     );
                 }
 
-                const dados =
+                const dadosManuais =
                     await manuaisResponse.json();
 
                 setManuais(
-                    Array.isArray(dados)
-                        ? dados
+                    Array.isArray(dadosManuais)
+                        ? dadosManuais
                         : []
                 );
+
             } catch (error) {
+
                 console.error(
                     "Erro ao carregar manuais:",
                     error
                 );
 
                 setErro(true);
+
             } finally {
+
                 setCarregando(false);
+
             }
         }
 
         carregarDados();
+
     }, [categoriaId]);
+
+    /*
+    ============================================================
+    CATEGORIAS FILTRADAS
+    ============================================================
+    */
+
+    const categoriasFiltradas = useMemo(() => {
+
+        const termo =
+            buscaCategoria
+                .trim()
+                .toLowerCase();
+
+        if (!termo) {
+            return categorias;
+        }
+
+        return categorias.filter((categoria) => {
+
+            const nome =
+                categoria.catNome?.toLowerCase() ||
+                "";
+
+            const descricao =
+                categoria.catDescricao?.toLowerCase() ||
+                "";
+
+            return (
+                nome.includes(termo) ||
+                descricao.includes(termo)
+            );
+        });
+
+    }, [categorias, buscaCategoria]);
 
     /*
     ============================================================
@@ -164,6 +234,7 @@ export default function ManuaisPage() {
     */
 
     async function excluirManual(manual) {
+
         const confirmar = window.confirm(
             `Tem certeza que deseja excluir o manual "${manual.manNome}"?\n\n` +
             "O PDF também será excluído do armazenamento."
@@ -174,6 +245,7 @@ export default function ManuaisPage() {
         }
 
         try {
+
             setExcluindoManual(manual.manID);
 
             const response =
@@ -189,18 +261,13 @@ export default function ManuaisPage() {
                 await response.json();
 
             if (!response.ok) {
+
                 throw new Error(
                     dados.msg ||
                     dados.mensagem ||
                     "Não foi possível excluir o manual."
                 );
             }
-
-            /*
-            ------------------------------------------------------
-            REMOVE O MANUAL DA LISTA SEM PRECISAR RECARREGAR
-            ------------------------------------------------------
-            */
 
             setManuais((lista) =>
                 lista.filter(
@@ -209,7 +276,9 @@ export default function ManuaisPage() {
                         Number(manual.manID)
                 )
             );
+
         } catch (error) {
+
             console.error(
                 "Erro ao excluir manual:",
                 error
@@ -219,8 +288,11 @@ export default function ManuaisPage() {
                 error.message ||
                 "Erro ao excluir manual."
             );
+
         } finally {
+
             setExcluindoManual(null);
+
         }
     }
 
@@ -231,12 +303,14 @@ export default function ManuaisPage() {
     */
 
     const manuaisFiltrados = useMemo(() => {
+
         const termo =
             busca
                 .trim()
                 .toLowerCase();
 
         return manuais.filter((manual) => {
+
             const nome =
                 manual.manNome?.toLowerCase() ||
                 "";
@@ -264,6 +338,7 @@ export default function ManuaisPage() {
                 correspondeTensao
             );
         });
+
     }, [
         manuais,
         busca,
@@ -277,7 +352,9 @@ export default function ManuaisPage() {
     */
 
     const grupos = useMemo(() => {
+
         return TENSOES.map((tensao) => {
+
             const itens =
                 manuaisFiltrados.filter(
                     (manual) =>
@@ -291,6 +368,7 @@ export default function ManuaisPage() {
                 manuais: itens
             };
         });
+
     }, [manuaisFiltrados]);
 
     /*
@@ -300,7 +378,9 @@ export default function ManuaisPage() {
     */
 
     function voltar() {
-        router.push("/sistema/home");
+
+        router.push("/sistema/manuais");
+
     }
 
     /*
@@ -310,7 +390,9 @@ export default function ManuaisPage() {
     */
 
     async function abrirManual(manual) {
+
         try {
+
             setAbrindoManual(manual.manID);
 
             const response =
@@ -326,6 +408,7 @@ export default function ManuaisPage() {
                 await response.json();
 
             if (!response.ok) {
+
                 alert(
                     dados.mensagem ||
                     dados.msg ||
@@ -336,6 +419,7 @@ export default function ManuaisPage() {
             }
 
             if (!dados.url) {
+
                 alert(
                     "O servidor não retornou o endereço do arquivo."
                 );
@@ -348,7 +432,9 @@ export default function ManuaisPage() {
                 "_blank",
                 "noopener,noreferrer"
             );
+
         } catch (error) {
+
             console.error(
                 "Erro ao abrir manual:",
                 error
@@ -357,8 +443,11 @@ export default function ManuaisPage() {
             alert(
                 "Erro ao abrir o manual."
             );
+
         } finally {
+
             setAbrindoManual(null);
+
         }
     }
 
@@ -369,13 +458,16 @@ export default function ManuaisPage() {
     */
 
     if (carregando) {
+
         return (
             <div className="manual-page-loading">
+
                 <i className="fas fa-spinner fa-spin"></i>
 
                 <span>
-                    Carregando manuais...
+                    Carregando documentação...
                 </span>
+
             </div>
         );
     }
@@ -387,14 +479,18 @@ export default function ManuaisPage() {
     */
 
     if (erro) {
+
         return (
             <div className="manual-page-empty">
+
                 <div className="manual-empty-icon error">
+
                     <i className="fas fa-triangle-exclamation"></i>
+
                 </div>
 
                 <h2>
-                    Não foi possível carregar os manuais
+                    Não foi possível carregar a documentação
                 </h2>
 
                 <p>
@@ -403,27 +499,42 @@ export default function ManuaisPage() {
 
                 <button
                     type="button"
-                    onClick={voltar}
+                    onClick={() =>
+                        window.location.reload()
+                    }
                     className="manual-back-button"
                 >
-                    <i className="fas fa-arrow-left"></i>
-                    Voltar
+
+                    <i className="fas fa-rotate-right"></i>
+
+                    Tentar novamente
+
                 </button>
+
             </div>
         );
     }
 
     /*
     ============================================================
-    SE NÃO TIVER CATEGORIA
+    PÁGINA PRINCIPAL DOS MANUAIS
+    MOSTRA CATEGORIAS
     ============================================================
     */
 
     if (!categoriaId) {
+
         return (
             <div className="manual-page">
+
+                {/* =================================================
+                    CABEÇALHO
+                ================================================= */}
+
                 <div className="manual-page-header">
+
                     <div>
+
                         <span className="dashboard-section-label">
                             DOCUMENTAÇÃO TÉCNICA
                         </span>
@@ -433,48 +544,170 @@ export default function ManuaisPage() {
                         </h2>
 
                         <p>
-                            Selecione uma categoria para visualizar
-                            os manuais técnicos.
+                            Encontre os manuais técnicos
+                            por categoria.
                         </p>
+
                     </div>
 
                     {ehAdmin() && (
+
                         <div className="manual-page-header-actions">
+
                             <Link
                                 href="/sistema/manuais/cadastrar"
                                 className="btn-sistema"
                             >
+
                                 <i className="fas fa-plus"></i>
+
                                 Novo manual
+
                             </Link>
+
                         </div>
+
                     )}
+
                 </div>
 
-                <div className="manual-categorias-container">
+                {/* =================================================
+                    BUSCA DE CATEGORIAS
+                ================================================= */}
+
+                <div className="manual-search">
+
+                    <i className="fas fa-search"></i>
+
+                    <input
+                        type="text"
+                        value={buscaCategoria}
+                        onChange={(e) =>
+                            setBuscaCategoria(
+                                e.target.value
+                            )
+                        }
+                        placeholder="Buscar categoria..."
+                    />
+
+                    {buscaCategoria && (
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setBuscaCategoria("")
+                            }
+                        >
+
+                            <i className="fas fa-xmark"></i>
+
+                        </button>
+
+                    )}
+
+                </div>
+
+                {/* =================================================
+                    CONTADOR
+                ================================================= */}
+
+                <div className="manual-categorias-heading">
+
+                    <div>
+
+                        <strong>
+                            {categoriasFiltradas.length}
+                        </strong>
+
+                        <span>
+                            {categoriasFiltradas.length === 1
+                                ? " categoria"
+                                : " categorias"}
+                        </span>
+
+                    </div>
+
+                </div>
+
+                {/* =================================================
+                    CATEGORIAS
+                ================================================= */}
+
+                {categoriasFiltradas.length === 0 ? (
+
                     <div className="manual-page-empty">
+
                         <div className="manual-empty-icon">
+
                             <i className="fas fa-folder-open"></i>
+
                         </div>
 
                         <h2>
-                            Selecione uma categoria
+                            Nenhuma categoria encontrada
                         </h2>
 
                         <p>
-                            Volte para a página inicial para
-                            escolher uma categoria.
+                            Tente alterar o termo da busca.
                         </p>
 
-                        <Link
-                            href="/sistema/home"
-                            className="manual-back-button"
-                        >
-                            <i className="fas fa-arrow-left"></i>
-                            Ver categorias
-                        </Link>
                     </div>
-                </div>
+
+                ) : (
+
+                    <div className="manual-categorias-grid">
+
+                        {categoriasFiltradas.map(
+                            (categoriaItem) => (
+
+                                <button
+                                    type="button"
+                                    key={categoriaItem.catID}
+                                    className="manual-categoria-card"
+                                    onClick={() =>
+                                        router.push(
+                                            `/sistema/manuais?categoria=${categoriaItem.catID}`
+                                        )
+                                    }
+                                >
+
+                                    <div className="manual-categoria-icon">
+
+                                        <i className="fas fa-folder"></i>
+
+                                    </div>
+
+                                    <div className="manual-categoria-info">
+
+                                        <strong>
+                                            {categoriaItem.catNome}
+                                        </strong>
+
+                                        {categoriaItem.catDescricao && (
+
+                                            <span>
+                                                {categoriaItem.catDescricao}
+                                            </span>
+
+                                        )}
+
+                                    </div>
+
+                                    <div className="manual-categoria-arrow">
+
+                                        <i className="fas fa-chevron-right"></i>
+
+                                    </div>
+
+                                </button>
+
+                            )
+                        )}
+
+                    </div>
+
+                )}
+
             </div>
         );
     }
@@ -486,6 +719,7 @@ export default function ManuaisPage() {
     */
 
     return (
+
         <div className="manual-page">
 
             {/* =================================================
@@ -495,13 +729,17 @@ export default function ManuaisPage() {
             <div className="manual-page-header">
 
                 <div>
+
                     <button
                         type="button"
                         onClick={voltar}
                         className="manual-back-link"
                     >
+
                         <i className="fas fa-arrow-left"></i>
+
                         Categorias
+
                     </button>
 
                     <span className="dashboard-section-label">
@@ -513,25 +751,34 @@ export default function ManuaisPage() {
                     </h2>
 
                     {categoria?.catDescricao && (
+
                         <p>
                             {categoria.catDescricao}
                         </p>
+
                     )}
+
                 </div>
 
                 <div className="manual-page-header-actions">
 
                     {ehAdmin() && (
+
                         <Link
                             href="/sistema/manuais/cadastrar"
                             className="btn-sistema"
                         >
+
                             <i className="fas fa-plus"></i>
+
                             Novo manual
+
                         </Link>
+
                     )}
 
                     <div className="manual-page-count">
+
                         <strong>
                             {manuais.length}
                         </strong>
@@ -541,9 +788,11 @@ export default function ManuaisPage() {
                                 ? "manual"
                                 : "manuais"}
                         </span>
+
                     </div>
 
                 </div>
+
             </div>
 
             {/* =================================================
@@ -564,14 +813,18 @@ export default function ManuaisPage() {
                 />
 
                 {busca && (
+
                     <button
                         type="button"
                         onClick={() =>
                             setBusca("")
                         }
                     >
+
                         <i className="fas fa-xmark"></i>
+
                     </button>
+
                 )}
 
             </div>
@@ -593,6 +846,7 @@ export default function ManuaisPage() {
                         setTensaoSelecionada("TODAS")
                     }
                 >
+
                     <i className="fas fa-layer-group"></i>
 
                     Todos
@@ -600,9 +854,11 @@ export default function ManuaisPage() {
                     <span>
                         {manuais.length}
                     </span>
+
                 </button>
 
                 {TENSOES.map((tensao) => {
+
                     const quantidade =
                         manuais.filter(
                             (manual) =>
@@ -612,6 +868,7 @@ export default function ManuaisPage() {
                         ).length;
 
                     return (
+
                         <button
                             key={tensao.id}
                             type="button"
@@ -627,6 +884,7 @@ export default function ManuaisPage() {
                                 )
                             }
                         >
+
                             <i
                                 className={`fas ${tensao.icone}`}
                             ></i>
@@ -636,7 +894,9 @@ export default function ManuaisPage() {
                             <span>
                                 {quantidade}
                             </span>
+
                         </button>
+
                     );
                 })}
 
@@ -647,10 +907,13 @@ export default function ManuaisPage() {
             ================================================= */}
 
             {manuaisFiltrados.length === 0 && (
+
                 <div className="manual-page-empty">
 
                     <div className="manual-empty-icon">
+
                         <i className="fas fa-file-circle-xmark"></i>
+
                     </div>
 
                     <h2>
@@ -663,6 +926,7 @@ export default function ManuaisPage() {
                     </p>
 
                 </div>
+
             )}
 
             {/* =================================================
@@ -670,6 +934,7 @@ export default function ManuaisPage() {
             ================================================= */}
 
             {manuaisFiltrados.length > 0 && (
+
                 <div className="manual-voltage-groups">
 
                     {grupos
@@ -678,6 +943,7 @@ export default function ManuaisPage() {
                                 grupo.manuais.length > 0
                         )
                         .map((grupo) => (
+
                             <section
                                 key={grupo.id}
                                 className="manual-voltage-group"
@@ -686,6 +952,7 @@ export default function ManuaisPage() {
                                 <div className="manual-group-header">
 
                                     <div>
+
                                         <span>
                                             TENSÃO
                                         </span>
@@ -693,6 +960,7 @@ export default function ManuaisPage() {
                                         <h3>
                                             {grupo.nome}
                                         </h3>
+
                                     </div>
 
                                     <strong>
@@ -705,6 +973,7 @@ export default function ManuaisPage() {
 
                                     {grupo.manuais.map(
                                         (manual) => (
+
                                             <ManualCard
                                                 key={manual.manID}
                                                 manual={manual}
@@ -728,15 +997,18 @@ export default function ManuaisPage() {
                                                     )
                                                 }
                                             />
+
                                         )
                                     )}
 
                                 </div>
 
                             </section>
+
                         ))}
 
                 </div>
+
             )}
 
         </div>
@@ -757,6 +1029,7 @@ function ManualCard({
     excluindo,
     abrindo
 }) {
+
     const caminho =
         manual.manChaveR2 || "";
 
@@ -764,10 +1037,13 @@ function ManualCard({
         extrairPasta(caminho);
 
     return (
+
         <div className="manual-card">
 
             <div className="manual-card-icon">
+
                 <i className="fas fa-file-pdf"></i>
+
             </div>
 
             <div className="manual-card-info">
@@ -777,10 +1053,15 @@ function ManualCard({
                 </strong>
 
                 {pasta && (
+
                     <span className="manual-card-folder">
+
                         <i className="fas fa-folder"></i>
+
                         {pasta}
+
                     </span>
+
                 )}
 
                 <small>
@@ -803,17 +1084,23 @@ function ManualCard({
                     }
                     disabled={abrindo}
                 >
+
                     {abrindo ? (
+
                         <>
                             <i className="fas fa-spinner fa-spin"></i>
                             Abrindo...
                         </>
+
                     ) : (
+
                         <>
                             <i className="fas fa-file-pdf"></i>
                             Abrir PDF
                         </>
+
                     )}
+
                 </button>
 
                 {/* =================================================
@@ -821,13 +1108,18 @@ function ManualCard({
                 ================================================= */}
 
                 {isAdmin && (
+
                     <>
+
                         <Link
                             href={`/sistema/manuais/alterar?id=${manual.manID}`}
                             className="manual-card-action-edit"
                         >
+
                             <i className="fas fa-edit"></i>
+
                             Editar
+
                         </Link>
 
                         <button
@@ -838,19 +1130,27 @@ function ManualCard({
                             }
                             disabled={excluindo}
                         >
+
                             {excluindo ? (
+
                                 <>
                                     <i className="fas fa-spinner fa-spin"></i>
                                     Excluindo...
                                 </>
+
                             ) : (
+
                                 <>
                                     <i className="fas fa-trash"></i>
                                     Excluir
                                 </>
+
                             )}
+
                         </button>
+
                     </>
+
                 )}
 
             </div>
@@ -866,6 +1166,7 @@ NORMALIZAR TENSÃO
 */
 
 function normalizarTensao(valor) {
+
     if (!valor) {
         return "";
     }
@@ -902,6 +1203,7 @@ EXTRAIR PASTA DO CAMINHO
 */
 
 function extrairPasta(chave) {
+
     if (!chave) {
         return "";
     }
