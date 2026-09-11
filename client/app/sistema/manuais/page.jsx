@@ -45,78 +45,71 @@ export default function ManuaisPage() {
     const [abrindoManual, setAbrindoManual] = useState(null);
 
     useEffect(() => {
+    if (!categoriaId) {
+        return;
+    }
 
-        if (!categoriaId) {
-            return;
-        }
+    async function carregarDados() {
+        try {
+            setCarregando(true);
+            setErro(false);
 
-        async function carregarDados() {
-
-            try {
-                setCarregando(true);
-                setErro(false);
-
-                const categoriasResponse =
-                    await fetch(
-                        `${API_URL}/categoria/listar`,
-                        {
-                            credentials: "include"
-                        }
-                    );
-
-                if (!categoriasResponse.ok) {
-                    throw new Error(
-                        "Erro ao carregar categorias"
-                    );
+            const categoriasResponse = await fetch(
+                `${API_URL}/categoria/listar`,
+                {
+                    credentials: "include"
                 }
+            );
 
-                const categorias =
-                    await categoriasResponse.json();
-
-                const categoriaEncontrada =
-                    categorias.find(
-                        (item) => Number(item.catID) === Number(categoriaId)
-                    );
-
-                setCategoria(
-                    categoriaEncontrada || null
-                );
-
-                const manuaisResponse =
-                    await fetch(
-                        `${API_URL}/manual/listar?categoria=${categoriaId}`,
-                        {
-                            credentials: "include"
-                        }
-                    );
-
-                if (!manuaisResponse.ok) {
-                    throw new Error(
-                        "Erro ao carregar manuais"
-                    );
-                }
-
-                const dados = await manuaisResponse.json();
-
-                setManuais(
-                    Array.isArray(dados)
-                        ? dados
-                        : []
-                );
-
-            } catch (error) {
-                console.error(error);
-                setErro(true);
-            } finally {
-                setCarregando(false);
+            if (!categoriasResponse.ok) {
+                throw new Error("Erro ao carregar categorias");
             }
+
+            const categorias = await categoriasResponse.json();
+
+            const categoriaEncontrada = categorias.find(
+                (item) =>
+                    Number(item.catID) === Number(categoriaId)
+            );
+
+            setCategoria(categoriaEncontrada || null);
+
+            const manuaisResponse = await fetch(
+                `${API_URL}/manual/listar?categoria=${categoriaId}`,
+                {
+                    credentials: "include"
+                }
+            );
+
+            if (!manuaisResponse.ok) {
+                throw new Error("Erro ao carregar manuais");
+            }
+
+            const dados = await manuaisResponse.json();
+
+            setManuais(
+                Array.isArray(dados)
+                    ? dados
+                    : []
+            );
+
+        } catch (error) {
+            console.error(error);
+            setErro(true);
+
+        } finally {
+            setCarregando(false);
         }
+    }
 
-        async function excluirManual(manual) {
+    carregarDados();
 
+    }, [categoriaId]);
+
+    async function excluirManual(manual) {
     const confirmar = window.confirm(
         `Tem certeza que deseja excluir o manual "${manual.manNome}"?\n\n` +
-        "O PDF também será excluído do Cloudflare R2."
+        "O PDF também será excluído do armazenamento."
     );
 
     if (!confirmar) {
@@ -124,7 +117,6 @@ export default function ManuaisPage() {
     }
 
     try {
-
         setExcluindoManual(manual.manID);
 
         const response = await fetch(
@@ -135,11 +127,9 @@ export default function ManuaisPage() {
             }
         );
 
-        const dados =
-            await response.json();
+        const dados = await response.json();
 
         if (!response.ok) {
-
             throw new Error(
                 dados.msg ||
                 "Não foi possível excluir o manual."
@@ -155,7 +145,6 @@ export default function ManuaisPage() {
         );
 
     } catch (error) {
-
         console.error(
             "Erro ao excluir manual:",
             error
@@ -167,14 +156,10 @@ export default function ManuaisPage() {
         );
 
     } finally {
-
         setExcluindoManual(null);
     }
 }
 
-        carregarDados();
-
-    }, [categoriaId]);
 
     const manuaisFiltrados = useMemo(() => {
 
@@ -374,53 +359,62 @@ export default function ManuaisPage() {
 
             <div className="manual-page-header">
 
-                <div>
+    <div>
+        <button
+            type="button"
+            onClick={voltar}
+            className="manual-back-link"
+        >
+            <i className="fas fa-arrow-left"></i>
+            Categorias
+        </button>
 
-                    <button
-                        type="button"
-                        onClick={voltar}
-                        className="manual-back-link"
-                    >
-                        <i className="fas fa-arrow-left"></i>
-                        Categorias
-                    </button>
+        <span className="dashboard-section-label">
+            DOCUMENTAÇÃO TÉCNICA
+        </span>
 
-                    <span className="dashboard-section-label">
-                        DOCUMENTAÇÃO TÉCNICA
-                    </span>
+        <h2>
+            {categoria?.catNome || "Manuais"}
+        </h2>
 
-                    <h2>
-                        {categoria?.catNome ||
-                            "Manuais"}
-                    </h2>
-
-                    {categoria?.catDescricao && (
-
-                        <p>
-                            {categoria.catDescricao}
-                        </p>
-
-                    )}
-
-                </div>
+        {categoria?.catDescricao && (
+            <p>
+                {categoria.catDescricao}
+            </p>
+        )}
+    </div>
 
 
-                <div className="manual-page-count">
+    <div className="manual-page-header-actions">
 
-                    <strong>
-                        {manuais.length}
-                    </strong>
+        {ehAdmin() && (
+            <Link
+                href="/sistema/manuais/cadastrar"
+                className="btn-sistema"
+            >
+                <i className="fas fa-plus"></i>
+                Novo manual
+            </Link>
+        )}
 
-                    <span>
-                        {manuais.length === 1
-                            ? "manual"
-                            : "manuais"
-                        }
-                    </span>
+        <div className="manual-page-count">
 
-                </div>
+            <strong>
+                {manuais.length}
+            </strong>
 
-            </div>
+            <span>
+                {manuais.length === 1
+                    ? "manual"
+                    : "manuais"
+                }
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
 
 
             {/* =================================================
